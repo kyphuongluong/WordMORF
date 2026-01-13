@@ -1,0 +1,1383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Daily Letter Game</title>
+    <!-- Dictionary v2.0 -->
+    <style>
+        /* Color Theme Variables */
+        :root {
+            /* Theme 1 (Default - Purple/Blue) */
+            --theme1-letter-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --theme1-letter-changed: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --theme1-button-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --theme1-submit-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --theme1-end-game-bg: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            
+            /* Theme 2 (Silver/Gold/Green) */
+            --theme2-letter-bg: linear-gradient(135deg, #C0C0C0 0%, #E8E8E8 100%);
+            --theme2-letter-accent: #2ecc71;
+            --theme2-letter-changed: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            --theme2-changed-accent: #27ae60;
+            --theme2-button-bg: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+            --theme2-submit-bg: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+            --theme2-end-game-bg: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+            
+            /* Active Theme (default to Theme 1) */
+            --letter-bg: var(--theme1-letter-bg);
+            --letter-changed: var(--theme1-letter-changed);
+            --button-bg: var(--theme1-button-bg);
+            --submit-bg: var(--theme1-submit-bg);
+            --end-game-bg: var(--theme1-end-game-bg);
+            --letter-accent: transparent;
+            --changed-accent: transparent;
+        }
+        
+        /* Theme 2 Active */
+        body.theme2 {
+            --letter-bg: var(--theme2-letter-bg);
+            --letter-changed: var(--theme2-letter-changed);
+            --button-bg: var(--theme2-button-bg);
+            --submit-bg: var(--theme2-submit-bg);
+            --end-game-bg: var(--theme2-end-game-bg);
+            --letter-accent: var(--theme2-letter-accent);
+            --changed-accent: var(--theme2-changed-accent);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            touch-action: pan-y;
+        }
+
+        .game-container {
+            background: white;
+            border-radius: 20px;
+            padding: 10px 30px 30px 30px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            color: #1e3c72;
+            text-align: center;
+            margin-bottom: 3px;
+            font-size: 1.8em;
+        }
+
+        .date-display {
+            text-align: center;
+            color: #666;
+            margin-bottom: 8px;
+            font-size: 0.9em;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .stat-box {
+            background: #f7f7f7;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.85em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #1e3c72;
+        }
+
+        .stat-value.warning {
+            color: #ff6b6b;
+        }
+
+        .letters-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 30px;
+            padding: 20px 0;
+        }
+
+        .letter-box {
+            position: relative;
+            width: 60px;
+            height: 195px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .arrow {
+            width: 60px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            user-select: none;
+            font-size: 2.25em;
+            color: #1e3c72;
+            transition: transform 0.1s;
+            margin-bottom: 5px;
+        }
+
+        .arrow:active {
+            transform: scale(1.2);
+        }
+
+        .letter {
+            width: 60px;
+            height: 60px;
+            background: var(--letter-bg);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2em;
+            font-weight: bold;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+            user-select: none;
+            touch-action: none;
+            position: relative;
+        }
+
+        .letter::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 20px;
+            height: 20px;
+            background: var(--letter-accent);
+            border-radius: 0 0 10px 0;
+        }
+
+        .letter.changed {
+            background: var(--letter-changed);
+        }
+
+        .letter.changed::after {
+            background: var(--changed-accent);
+        }
+
+        .letter-reset {
+            width: 60px;
+            height: 44px;
+            font-size: 1.4em;
+            background: #f0f0f0;
+            color: #666;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 8px;
+            transition: background 0.2s;
+            padding: 4px;
+            font-weight: 600;
+        }
+
+        .letter-reset:active {
+            background: #e0e0e0;
+        }
+
+        .letter-reset:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .cost-display {
+            text-align: center;
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 20px;
+            min-height: 24px;
+        }
+
+        .cost-display.active {
+            color: #1e3c72;
+            font-weight: 600;
+        }
+
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .submit-btn {
+            padding: 18px;
+            font-size: 1.2em;
+            font-weight: bold;
+            background: var(--submit-bg);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+            transition: transform 0.1s;
+            grid-column: span 2;
+        }
+
+        .submit-btn:active {
+            transform: scale(0.98);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .reset-btn {
+            padding: 15px;
+            font-size: 1em;
+            font-weight: 600;
+            background: #f0f0f0;
+            color: #333;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.1s, background 0.2s;
+            grid-column: span 2;
+        }
+
+        .reset-btn:active {
+            transform: scale(0.98);
+        }
+
+        .reset-btn:hover {
+            background: #e0e0e0;
+        }
+
+        .reset-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .end-game-btn {
+            width: 100%;
+            padding: 15px;
+            font-size: 1em;
+            font-weight: 600;
+            background: var(--end-game-bg);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.1s, opacity 0.2s;
+        }
+
+        .end-game-btn:active {
+            transform: scale(0.98);
+        }
+
+        .end-game-btn:hover {
+            opacity: 0.9;
+        }
+
+        .popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .popup-content {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            max-width: 380px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .popup-content h2 {
+            color: #1e3c72;
+            text-align: center;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .score-history {
+            margin-bottom: 15px;
+        }
+
+        .score-day {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            margin-bottom: 6px;
+            background: #f7f7f7;
+            border-radius: 8px;
+            font-size: 0.9em;
+        }
+
+        .score-day.today {
+            background: linear-gradient(135deg, #667eea20 0%, #764ba220 100%);
+            border: 2px solid #667eea;
+        }
+
+        .score-date {
+            font-weight: 600;
+            color: #333;
+            font-size: 0.95em;
+        }
+
+        .score-value {
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .play-past-btn {
+            padding: 6px 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8em;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .play-past-btn:active {
+            transform: scale(0.95);
+        }
+
+        .close-popup-btn {
+            width: 100%;
+            padding: 12px;
+            background: #f0f0f0;
+            color: #333;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1em;
+        }
+
+        .close-popup-btn:hover {
+            background: #e0e0e0;
+        }
+
+        .message {
+            text-align: center;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-weight: 600;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .message.hidden {
+            opacity: 0;
+        }
+
+        .vowel-changes {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .vowel-changes h3 {
+            font-size: 0.9em;
+            color: #856404;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .vowel-mapping {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .vowel-map {
+            font-family: monospace;
+            font-size: 0.95em;
+            color: #856404;
+            font-weight: 600;
+        }
+
+        .words-found {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f7f7f7;
+            border-radius: 10px;
+        }
+
+        .words-found h3 {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .word-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .word-badge {
+            background: #667eea;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        @media (max-width: 500px) {
+            .game-container {
+                padding: 10px 20px 20px 20px;
+            }
+
+            .arrow {
+                width: 50px;
+                height: 37px;
+                font-size: 1.875em;
+                margin-bottom: 4px;
+            }
+
+            .letter-box {
+                width: 50px;
+                height: 185px;
+            }
+
+            .letter {
+                width: 50px;
+                height: 50px;
+                font-size: 1.6em;
+            }
+
+            .letter-reset {
+                width: 50px;
+                height: 38px;
+                font-size: 1.3em;
+                margin-top: 8px;
+            }
+        }
+
+        /* Shake animation for failed words */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+
+        .shake {
+            animation: shake 0.5s;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container" id="gameContainer">
+        <h1>📝 Daily Letter Game</h1>
+        <div class="date-display" id="dateDisplay"></div>
+
+        <div class="stats">
+            <div class="stat-box">
+                <div class="stat-label">Points Remaining</div>
+                <div class="stat-value" id="pointsRemaining">20</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Total Score</div>
+                <div class="stat-value" id="totalScore">0</div>
+            </div>
+        </div>
+
+        <div class="letters-container" id="lettersContainer"></div>
+
+        <div class="cost-display" id="costDisplay">Swipe or tap arrows to change letters</div>
+
+        <div class="button-group">
+            <button class="submit-btn" id="submitBtn" onclick="submitWord()">Submit Word</button>
+        </div>
+
+        <div class="button-group" style="margin-top: 10px; display: flex; justify-content: center;">
+            <button class="end-game-btn" id="endGameBtn" onclick="endGame()" style="max-width: 300px;">End Game</button>
+        </div>
+
+        <div class="message hidden" id="message"></div>
+
+        <!-- 7-Day Average Popup -->
+        <div class="popup-overlay" id="popupOverlay" style="display: none;">
+            <div class="popup-content">
+                <h2>7-Day Score History</h2>
+                <div class="score-history" id="scoreHistory"></div>
+                <button class="close-popup-btn" onclick="closePopup()">Close</button>
+            </div>
+        </div>
+
+        <div class="vowel-changes">
+            <h3>Vowel Transformations (After Submit)</h3>
+            <div class="vowel-mapping" id="vowelMapping"></div>
+        </div>
+
+        <div class="words-found" id="wordsFoundContainer" style="display: none;">
+            <h3>Words Found Today:</h3>
+            <div class="word-list" id="wordList"></div>
+        </div>
+
+        <div class="words-found" id="failedWordsContainer" style="display: none;">
+            <h3 style="color: #e74c3c;">Failed Words:</h3>
+            <div class="word-list" id="failedWordList"></div>
+        </div>
+
+        <button class="reset-btn" id="devRandomizeBtn" onclick="randomizeDate()" style="margin-top: 20px; width: 90%; max-width: 500px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+            🔧 Developer Feature - Randomize Date
+        </button>
+
+        <button class="reset-btn" id="devNextDayBtn" onclick="advanceToNextDay()" style="margin-top: 10px; width: 90%; max-width: 500px; background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);">
+            🔧 Developer Feature - Next Day
+        </button>
+
+        <button class="reset-btn" id="devResetBtn" onclick="developerReset()" style="margin-top: 10px; width: 90%; max-width: 500px; background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);">
+            🔧 Developer Reset - Clear All Scores
+        </button>
+
+        <button class="reset-btn" id="themeToggleBtn" onclick="toggleTheme()" style="margin-top: 10px; width: 90%; max-width: 500px; background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);">
+            🎨 Toggle Color Theme
+        </button>
+    </div>
+
+    <script>
+        // Game state
+        let gameState = {
+            currentLetters: [],
+            originalLetters: [],
+            pointsRemaining: 20,
+            totalScore: 0,
+            wordsFound: [],
+            failedWords: [],
+            vowelMap: {},
+            seed: 0,
+            gameEnded: false,
+            currentDate: null,
+            currentDateObj: null
+        };
+
+        let touchStartY = {};
+
+        // LocalStorage functions for score tracking
+        function getDateKey(date) {
+            return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        }
+
+        function saveScore(dateKey, score) {
+            const scores = JSON.parse(localStorage.getItem('dailyLetterScores') || '{}');
+            scores[dateKey] = score;
+            localStorage.setItem('dailyLetterScores', JSON.stringify(scores));
+        }
+
+        function getScore(dateKey) {
+            const scores = JSON.parse(localStorage.getItem('dailyLetterScores') || '{}');
+            const score = scores[dateKey] || null;
+            console.log('getScore:', dateKey, '=', score, '| All scores:', scores);
+            return score;
+        }
+
+        function getLast7Days(fromDate = null) {
+            const days = [];
+            const today = fromDate || new Date();
+            for (let i = 0; i < 7; i++) {
+                const date = new Date(today);
+                date.setDate(date.getDate() - i);
+                days.push(date);
+            }
+            return days;
+        }
+
+        // Seeded random number generator
+        class SeededRandom {
+            constructor(seed) {
+                this.seed = seed;
+            }
+            
+            next() {
+                this.seed = (this.seed * 9301 + 49297) % 233280;
+                return this.seed / 233280;
+            }
+        }
+
+        // Get Julian date
+        function getJulianDate(date = null) {
+            const now = date || new Date();
+            const start = new Date(now.getFullYear(), 0, 0);
+            const diff = now - start;
+            const oneDay = 1000 * 60 * 60 * 24;
+            return Math.floor(diff / oneDay);
+        }
+
+        // Initialize game
+        function initGame(targetDate = null, skipSavedCheck = false) {
+            // Check URL hash for cleared flag
+            if (window.location.hash === '#cleared') {
+                console.log('🔥 RESET DETECTED from URL hash');
+                
+                // Clear localStorage AGAIN
+                try {
+                    localStorage.removeItem('dailyLetterScores');
+                    localStorage.clear();
+                    console.log('🔥 CLEARED localStorage on page load');
+                    console.log('localStorage.dailyLetterScores =', localStorage.getItem('dailyLetterScores'));
+                    console.log('localStorage length =', localStorage.length);
+                } catch (e) {
+                    console.error('Error clearing on reload:', e);
+                }
+                
+                skipSavedCheck = true;
+                
+                // Remove hash
+                history.replaceState(null, null, ' ');
+            }
+            
+            // Check URL parameter for reset flag (old method)
+            const urlParams = new URLSearchParams(window.location.search);
+            const resetParam = urlParams.get('reset');
+            
+            if (resetParam) {
+                console.log('RESET DETECTED from URL parameter:', resetParam);
+                
+                // Clear localStorage AGAIN after page reload
+                try {
+                    localStorage.removeItem('dailyLetterScores');
+                    localStorage.clear();
+                    console.log('RESET: Cleared localStorage on reload');
+                    console.log('RESET: localStorage.dailyLetterScores =', localStorage.getItem('dailyLetterScores'));
+                } catch (e) {
+                    console.error('Error clearing on reload:', e);
+                }
+                
+                skipSavedCheck = true;
+                
+                // Clean up URL (remove reset parameter)
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+            
+            const date = targetDate || new Date();
+            gameState.currentDate = getDateKey(date);
+            gameState.currentDateObj = date; // Store the actual date object
+            
+            // Default: set button to "End Game"
+            const endGameBtn = document.getElementById('endGameBtn');
+            if (endGameBtn) {
+                endGameBtn.textContent = 'End Game';
+                endGameBtn.onclick = endGame;
+            }
+            
+            // Check if there's a saved score for this date (unless skipping)
+            if (!skipSavedCheck) {
+                const savedScore = getScore(gameState.currentDate);
+                if (savedScore !== null) {
+                    // Game already completed for this date
+                    gameState.gameEnded = true;
+                    gameState.totalScore = savedScore;
+                    if (endGameBtn) {
+                        endGameBtn.textContent = '7-Day Average';
+                        endGameBtn.onclick = showPopup;
+                    }
+                    console.log('Game already completed with score:', savedScore);
+                } else {
+                    // No saved score - game is active
+                    gameState.gameEnded = false;
+                    console.log('No saved score - fresh game');
+                }
+            } else {
+                // Explicitly set game as not ended when skipping check
+                gameState.gameEnded = false;
+                console.log('Skipping saved check - fresh game forced');
+            }
+            
+            const julian = getJulianDate(date);
+            gameState.seed = julian;
+            
+            const rng = new SeededRandom(julian);
+            
+            // Generate 5 random letters
+            gameState.originalLetters = [];
+            for (let i = 0; i < 5; i++) {
+                const charCode = 65 + Math.floor(rng.next() * 26);
+                gameState.originalLetters.push(String.fromCharCode(charCode));
+            }
+            
+            gameState.currentLetters = [...gameState.originalLetters];
+            
+            // Generate vowel mapping - vowels transform to any random letter
+            const vowels = ['A', 'E', 'I', 'O', 'U'];
+            
+            gameState.vowelMap = {};
+            vowels.forEach((vowel) => {
+                const charCode = 65 + Math.floor(rng.next() * 26);
+                gameState.vowelMap[vowel] = String.fromCharCode(charCode);
+            });
+            
+            renderGame();
+        }
+
+        // Developer feature: Randomize date to test different combinations
+        function randomizeDate() {
+            // Generate a random date within the past year
+            const randomDays = Math.floor(Math.random() * 365);
+            const today = new Date();
+            const randomDate = new Date(today.getFullYear(), 0, 1 + randomDays);
+            
+            // Calculate Julian date for the random date
+            const start = new Date(randomDate.getFullYear(), 0, 0);
+            const diff = randomDate - start;
+            const oneDay = 1000 * 60 * 60 * 24;
+            const julian = Math.floor(diff / oneDay);
+            
+            // Reset game state with new seed
+            gameState = {
+                currentLetters: [],
+                originalLetters: [],
+                pointsRemaining: 20,
+                totalScore: 0,
+                wordsFound: [],
+                failedWords: [],
+                vowelMap: {},
+                seed: julian
+            };
+            
+            // Reinitialize with the random seed
+            const rng = new SeededRandom(julian);
+            
+            // Generate 5 random letters
+            gameState.originalLetters = [];
+            for (let i = 0; i < 5; i++) {
+                const charCode = 65 + Math.floor(rng.next() * 26);
+                gameState.originalLetters.push(String.fromCharCode(charCode));
+            }
+            
+            gameState.currentLetters = [...gameState.originalLetters];
+            
+            // Generate vowel mapping
+            const vowels = ['A', 'E', 'I', 'O', 'U'];
+            gameState.vowelMap = {};
+            vowels.forEach((vowel) => {
+                const charCode = 65 + Math.floor(rng.next() * 26);
+                gameState.vowelMap[vowel] = String.fromCharCode(charCode);
+            });
+            
+            // Update date display to show it's randomized
+            document.getElementById('dateDisplay').textContent = 
+                `🔧 DEV MODE: ${randomDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} (Seed: ${julian})`;
+            
+            renderGame();
+            showMessage('🔧 Date randomized! New letter combination loaded.', 'success');
+        }
+
+        // Developer Feature: Advance to next day
+        function advanceToNextDay() {
+            // Get the next day from wherever we currently are
+            let nextDay;
+            if (gameState.currentDateObj) {
+                // If we have a current date, advance from there
+                nextDay = new Date(gameState.currentDateObj);
+                nextDay.setDate(nextDay.getDate() + 1);
+            } else {
+                // Otherwise start from tomorrow
+                nextDay = new Date();
+                nextDay.setDate(nextDay.getDate() + 1);
+            }
+            
+            // Check if this day already has a score
+            const nextDateKey = getDateKey(nextDay);
+            const existingScore = getScore(nextDateKey);
+            
+            // Reset game state
+            gameState = {
+                currentLetters: [],
+                originalLetters: [],
+                pointsRemaining: 20,
+                totalScore: 0,
+                wordsFound: [],
+                failedWords: [],
+                vowelMap: {},
+                seed: 0,
+                gameEnded: false,
+                currentDate: null,
+                currentDateObj: null
+            };
+            
+            // Initialize with the next date
+            // Skip saved check so we can play even if already completed
+            initGame(nextDay, true);
+            
+            // If there was an existing score, show it but allow replaying
+            if (existingScore !== null) {
+                showMessage(`🔧 Jumped to ${nextDay.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}! (Previous score: ${existingScore})`, 'success');
+            } else {
+                showMessage(`🔧 Jumped to ${nextDay.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}!`, 'success');
+            }
+            
+            // Update button to "End Game" since it's a new day
+            document.getElementById('endGameBtn').textContent = 'End Game';
+            document.getElementById('endGameBtn').onclick = endGame;
+            
+            // Enable submit button
+            document.getElementById('submitBtn').disabled = false;
+            document.getElementById('submitBtn').style.opacity = '1';
+            document.getElementById('submitBtn').style.cursor = 'pointer';
+        }
+
+        // Toggle between color themes
+        function toggleTheme() {
+            const body = document.body;
+            const isTheme2 = body.classList.contains('theme2');
+            
+            if (isTheme2) {
+                // Switch to Theme 1
+                body.classList.remove('theme2');
+                showMessage('🎨 Switched to Color Theme 1 (Purple/Blue)', 'success');
+            } else {
+                // Switch to Theme 2
+                body.classList.add('theme2');
+                showMessage('🎨 Switched to Color Theme 2 (Silver/Gold/Green)', 'success');
+            }
+        }
+
+        // Developer Reset - Clear all scores and reset to base condition
+        function developerReset() {
+            if (!confirm('⚠️ This will delete ALL saved scores. Are you sure?')) {
+                return;
+            }
+            
+            // Clear everything multiple times
+            try {
+                for (let i = 0; i < 5; i++) {
+                    localStorage.removeItem('dailyLetterScores');
+                    localStorage.clear();
+                }
+                
+                console.log('✅ CLEARED localStorage');
+                console.log('localStorage.dailyLetterScores =', localStorage.getItem('dailyLetterScores'));
+                console.log('localStorage length =', localStorage.length);
+                
+                // Force a hard reload by adding cache-busting timestamp
+                const timestamp = Date.now();
+                window.location.href = window.location.pathname + '?v=' + timestamp + '#cleared';
+                
+            } catch (e) {
+                console.error('❌ Error clearing localStorage:', e);
+                alert('Error: ' + e.message);
+            }
+        }
+
+        // Render the game
+        function renderGame() {
+            // Update date - use currentDateObj if available (for developer features), otherwise use today
+            const displayDate = gameState.currentDateObj || new Date();
+            document.getElementById('dateDisplay').textContent = 
+                displayDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            
+            // Update stats
+            document.getElementById('pointsRemaining').textContent = gameState.pointsRemaining;
+            document.getElementById('pointsRemaining').classList.toggle('warning', gameState.pointsRemaining <= 5);
+            document.getElementById('totalScore').textContent = gameState.totalScore;
+            
+            // Render letters
+            const container = document.getElementById('lettersContainer');
+            container.innerHTML = '';
+            
+            gameState.currentLetters.forEach((letter, index) => {
+                const box = document.createElement('div');
+                box.className = 'letter-box';
+                
+                const upArrow = document.createElement('div');
+                upArrow.className = 'arrow';
+                upArrow.textContent = '▲';
+                upArrow.onclick = () => changeLetter(index, 1);
+                
+                const letterDiv = document.createElement('div');
+                letterDiv.className = 'letter';
+                letterDiv.textContent = letter;
+                letterDiv.id = `letter-${index}`;
+                
+                // Add touch events for swipe
+                letterDiv.addEventListener('touchstart', (e) => handleTouchStart(e, index), { passive: true });
+                letterDiv.addEventListener('touchmove', (e) => handleTouchMove(e, index), { passive: false });
+                letterDiv.addEventListener('touchend', () => handleTouchEnd(index));
+                
+                // Check if changed
+                if (letter !== gameState.originalLetters[index]) {
+                    letterDiv.classList.add('changed');
+                }
+                
+                const downArrow = document.createElement('div');
+                downArrow.className = 'arrow';
+                downArrow.textContent = '▼';
+                downArrow.onclick = () => changeLetter(index, -1);
+                
+                // Add individual reset button
+                const resetBtn = document.createElement('button');
+                resetBtn.className = 'letter-reset';
+                resetBtn.textContent = '↺';
+                resetBtn.disabled = letter === gameState.originalLetters[index];
+                resetBtn.onclick = () => resetSingleLetter(index);
+                
+                box.appendChild(upArrow);
+                box.appendChild(letterDiv);
+                box.appendChild(downArrow);
+                box.appendChild(resetBtn);
+                container.appendChild(box);
+            });
+            
+            // Update cost display
+            updateCostDisplay();
+            
+            // Render vowel mapping
+            const vowelMappingDiv = document.getElementById('vowelMapping');
+            vowelMappingDiv.innerHTML = '';
+            Object.entries(gameState.vowelMap).forEach(([from, to]) => {
+                const span = document.createElement('span');
+                span.className = 'vowel-map';
+                span.textContent = `${from} → ${to}`;
+                vowelMappingDiv.appendChild(span);
+            });
+            
+            // Render words found
+            if (gameState.wordsFound.length > 0) {
+                document.getElementById('wordsFoundContainer').style.display = 'block';
+                const wordList = document.getElementById('wordList');
+                wordList.innerHTML = '';
+                gameState.wordsFound.forEach(word => {
+                    const badge = document.createElement('span');
+                    badge.className = 'word-badge';
+                    badge.textContent = word;
+                    wordList.appendChild(badge);
+                });
+            }
+            
+            // Render failed words
+            if (gameState.failedWords.length > 0) {
+                document.getElementById('failedWordsContainer').style.display = 'block';
+                const failedWordList = document.getElementById('failedWordList');
+                failedWordList.innerHTML = '';
+                gameState.failedWords.forEach(word => {
+                    const badge = document.createElement('span');
+                    badge.className = 'word-badge';
+                    badge.style.background = 'linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)';
+                    badge.textContent = word;
+                    failedWordList.appendChild(badge);
+                });
+            }
+            
+            // Disable submit button if current word already failed or game ended
+            const currentWord = gameState.currentLetters.join('');
+            const submitBtn = document.getElementById('submitBtn');
+            if (gameState.failedWords.includes(currentWord) || gameState.gameEnded) {
+                submitBtn.disabled = true;
+                submitBtn.style.opacity = '0.5';
+                submitBtn.style.cursor = 'not-allowed';
+            } else {
+                submitBtn.disabled = false;
+                submitBtn.style.opacity = '1';
+                submitBtn.style.cursor = 'pointer';
+            }
+        }
+
+        // Touch handling
+        function handleTouchStart(e, index) {
+            touchStartY[index] = e.touches[0].clientY;
+        }
+
+        function handleTouchMove(e, index) {
+            if (!touchStartY[index]) return;
+            
+            e.preventDefault();
+            const currentY = e.touches[0].clientY;
+            const diff = touchStartY[index] - currentY;
+            
+            if (Math.abs(diff) > 30) {
+                if (diff > 0) {
+                    changeLetter(index, 1);
+                } else {
+                    changeLetter(index, -1);
+                }
+                touchStartY[index] = currentY;
+            }
+        }
+
+        function handleTouchEnd(index) {
+            delete touchStartY[index];
+        }
+
+        // Change letter
+        function changeLetter(index, direction) {
+            let charCode = gameState.currentLetters[index].charCodeAt(0);
+            charCode += direction;
+            
+            if (charCode < 65) charCode = 90;
+            if (charCode > 90) charCode = 65;
+            
+            gameState.currentLetters[index] = String.fromCharCode(charCode);
+            renderGame();
+        }
+
+        // Calculate cost
+        function calculateCost() {
+            let cost = 0;
+            for (let i = 0; i < 5; i++) {
+                const original = gameState.originalLetters[i].charCodeAt(0);
+                const current = gameState.currentLetters[i].charCodeAt(0);
+                let diff = Math.abs(current - original);
+                diff = Math.min(diff, 26 - diff); // Circular distance
+                cost += diff;
+            }
+            return cost;
+        }
+
+        // Calculate points earned for a word based on letter frequency
+        function calculatePointsEarned(word) {
+            let points = 0;
+            const vowels = ['A', 'E', 'I', 'O', 'U'];
+            const twoPointLetters = ['V', 'K', 'X', 'Z', 'C', 'M', 'F', 'G', 'W', 'Y', 'P', 'B'];
+            
+            for (let letter of word) {
+                if (vowels.includes(letter)) {
+                    points += 1.5;
+                } else if (twoPointLetters.includes(letter)) {
+                    points += 2;
+                } else {
+                    points += 1;
+                }
+            }
+            
+            return Math.ceil(points); // Round up
+        }
+
+        // Update cost display
+        function updateCostDisplay() {
+            const cost = calculateCost();
+            const word = gameState.currentLetters.join('');
+            const earned = calculatePointsEarned(word);
+            const display = document.getElementById('costDisplay');
+            
+            if (cost === 0) {
+                display.textContent = 'Swipe or tap arrows to change letters';
+                display.classList.remove('active');
+            } else {
+                display.innerHTML = `This word will cost <strong>${cost}</strong> point${cost !== 1 ? 's' : ''} and earn <strong>~${earned}</strong> point${earned !== 1 ? 's' : ''}`;
+                display.classList.add('active');
+            }
+        }
+
+        // Reset letters to original state
+        function resetLetters() {
+            gameState.currentLetters = [...gameState.originalLetters];
+            renderGame();
+        }
+
+        // Reset a single letter to its original state
+        function resetSingleLetter(index) {
+            gameState.currentLetters[index] = gameState.originalLetters[index];
+            renderGame();
+        }
+
+        // Comprehensive dictionary organized alphabetically
+        const wordsA = ['AAHED','ABACA','ABACK','ABAFT','ABASE','ABASH','ABATE','ABBEY','ABBOT','ABHOR','ABIDE','ABODE','ABORT','ABOUT','ABOVE','ABUSE','ABYSS','ACORN','ACRES','ACRID','ACTED','ACTOR','ACUTE','ADAGE','ADAPT','ADDED','ADDER','ADEPT','ADIEU','ADMIN','ADMIT','ADOBE','ADOPT','ADORE','ADORN','ADULT','AFIRE','AFOOT','AFOUL','AFTER','AGAIN','AGAPE','AGATE','AGAVE','AGENT','AGILE','AGING','AGLOW','AGONY','AGREE','AHEAD','AIDER','AIDED','AILED','AIMED','AIRER','AISLE','ALARM','ALBUM','ALERT','ALGAE','ALIBI','ALIEN','ALIGN','ALIKE','ALIVE','ALLAY','ALLEY','ALLOT','ALLOW','ALLOY','ALOFT','ALOHA','ALONE','ALONG','ALOOF','ALOUD','ALPHA','ALTAR','ALTER','AMASS','AMAZE','AMBER','AMBIT','AMBLE','AMEND','AMINO','AMISS','AMITY','AMONG','AMPLE','AMPLY','AMUSE','ANGEL','ANGER','ANGLE','ANGRY','ANGST','ANIME','ANKLE','ANNEX','ANNOY','ANNUL','ANODE','ANTIC','ANTSY','ANVIL','AORTA','APART','APHID','APNEA','APPLE','APPLY','APRON','APTLY','ARBOR','ARDOR','ARENA','ARGUE','ARISE','ARMOR','AROMA','AROSE','ARRAY','ARROW','ARSON','ARTSY','ASCOT','ASHEN','ASHES','ASIDE','ASKED','ASPEN','ASSAY','ASSET','ASTER','ASTRO','ATLAS','ATOLL','ATONE','ATTIC','AUDIO','AUDIT','AUGUR','AUNTS','AURAL','AVAIL','AVERT','AVIAN','AVOID','AWAIT','AWAKE','AWARD','AWARE','AWASH','AWFUL','AWOKE','AXIAL','AXIOM','AXLES','AZURE'];
+        const wordsB = ['BABEL','BACON','BADGE','BADLY','BAGEL','BAGGY','BAILS','BAKED','BAKER','BAKES','BALLS','BALMY','BANAL','BANDS','BANDY','BANGS','BANJO','BANKS','BARBS','BARDS','BARED','BARER','BARGE','BARKS','BARNS','BARON','BASAL','BASED','BASER','BASES','BASIC','BASIL','BASIN','BASIS','BASKS','BATCH','BATED','BATHE','BATHS','BATON','BATTY','BAULK','BAWDY','BAYED','BAYOU','BEACH','BEADS','BEADY','BEAKS','BEAMS','BEANS','BEARD','BEARS','BEAST','BEATS','BEBOP','BEECH','BEEFY','BEEPS','BEERS','BEETS','BEFIT','BEGAN','BEGAT','BEGET','BEGIN','BEGUN','BEING','BELCH','BELIE','BELLE','BELLS','BELLY','BELOW','BELTS','BENCH','BENDS','BENDY','BERET','BERRY','BERTH','BERYL','BESET','BESOT','BESTS','BETAS','BETEL','BEVEL','BEZEL','BIBLE','BIDDY','BIDED','BIDES','BIDET','BIGHT','BIGOT','BIJOU','BIKED','BIKER','BIKES','BILGE','BILLS','BILLY','BIMBO','BINDS','BINGE','BINGO','BIOME','BIPED','BIRCH','BIRDS','BIRTH','BISON','BITCH','BITES','BITTY','BLACK','BLADE','BLAME','BLAND','BLANK','BLARE','BLAST','BLAZE','BLEAK','BLEAT','BLEED','BLEEP','BLEND','BLESS','BLIMP','BLIND','BLING','BLINK','BLIPS','BLISS','BLITZ','BLOAT','BLOBS','BLOCK','BLOGS','BLOKE','BLOND','BLOOD','BLOOM','BLOTS','BLOWN','BLOWS','BLUED','BLUES','BLUFF','BLUNT','BLURB','BLURS','BLURT','BLUSH','BOARD','BOARS','BOAST','BOATS','BOBBY','BODED','BODES','BOGEY','BOGUS','BOILS','BOLLS','BOLTS','BONDS','BONED','BONES','BONGO','BONUS','BOOBY','BOOED','BOOKS','BOOMS','BOONS','BOORS','BOOST','BOOTH','BOOTS','BOOTY','BOOZE','BOOZY','BORAX','BORED','BORER','BORES','BORNE','BOSOM','BOSSY','BOTCH','BOUGH','BOUND','BOUTS','BOWED','BOWEL','BOWER','BOWLS','BOXED','BOXER','BOXES','BRACE','BRAGS','BRAID','BRAIN','BRAKE','BRAND','BRASH','BRASS','BRAVE','BRAVO','BRAWL','BRAWN','BRAYS','BRAZE','BREAD','BREAK','BREED','BREWS','BRIAR','BRIBE','BRICK','BRIDE','BRIEF','BRIER','BRIGS','BRIMS','BRINE','BRING','BRINK','BRINY','BRISK','BROAD','BROIL','BROKE','BROOD','BROOK','BROOM','BROTH','BROWN','BROWS','BRUIN','BRUNT','BRUSH','BRUTE','BUCKS','BUDDY','BUDGE','BUFFS','BUGGY','BUGLE','BUILD','BUILT','BULBS','BULGE','BULKS','BULKY','BULLS','BULLY','BUMPS','BUMPY','BUNCH','BUNKS','BUNNY','BUOYS','BURLY','BURNS','BURNT','BURPS','BURRO','BURRS','BURST','BUSHY','BUSTY','BUTCH','BUTTE','BUTTS','BUXOM','BUYER','BUZZY','BYLAW','BYTES'];
+        const wordsC = ['CABBY','CABIN','CABLE','CACAO','CACHE','CACTI','CADDY','CADET','CADRE','CAFES','CAGED','CAGES','CAGEY','CAIRN','CAKED','CAKES','CALIF','CALMS','CALVE','CALYX','CAMEL','CAMEO','CAMPO','CAMPS','CAMPY','CANAL','CANDY','CANED','CANES','CANID','CANNY','CANOE','CANON','CANST','CANTO','CANTS','CAPED','CAPER','CAPES','CAPON','CARAT','CARDS','CARED','CARER','CARES','CARGO','CARNY','CAROB','CAROL','CAROM','CARPS','CARRY','CARTS','CARVE','CASED','CASES','CASKS','CASTE','CASTS','CATCH','CATER','CATTY','CAULK','CAUSE','CAVED','CAVER','CAVES','CAVIL','CEASE','CEDAR','CEDED','CEDES','CEILS','CELLS','CELTS','CENTS','CHAFE','CHAFF','CHAIN','CHAIR','CHALK','CHAMP','CHANT','CHAOS','CHAPS','CHARD','CHARM','CHARS','CHART','CHASE','CHASM','CHATS','CHEAP','CHEAT','CHECK','CHEEK','CHEEP','CHEER','CHEFS','CHESS','CHEST','CHEWS','CHEWY','CHICK','CHIDE','CHIEF','CHILD','CHILE','CHILI','CHILL','CHIME','CHIMP','CHINA','CHINK','CHINO','CHINS','CHIPS','CHIRP','CHIVE','CHOCK','CHOIR','CHOKE','CHOMP','CHOPS','CHORD','CHORE','CHOSE','CHOWS','CHUCK','CHUMP','CHUMS','CHUNK','CHURN','CHUTE','CIDER','CIGAR','CINCH','CIRCA','CITED','CITES','CIVET','CIVIC','CIVIL','CLACK','CLAIM','CLAMP','CLAMS','CLANG','CLANK','CLANS','CLAPS','CLASH','CLASP','CLASS','CLAVE','CLAWS','CLAYS','CLEAN','CLEAR','CLEAT','CLEFS','CLEFT','CLERK','CLICK','CLIFF','CLIMB','CLIME','CLING','CLINK','CLIPS','CLOAK','CLOCK','CLODS','CLOGS','CLOMP','CLONE','CLONK','CLOSE','CLOTH','CLOTS','CLOUD','CLOUT','CLOVE','CLOWN','CLOYS','CLUBS','CLUCK','CLUED','CLUES','CLUMP','CLUNG','CLUNK','COACH','COALS','COAST','COATS','COBRA','COCKY','COCOA','CODED','CODER','CODES','CODEX','COEDS','COILS','COINS','COKED','COKES','COLAS','COLDS','COLIC','COLON','COLOR','COLTS','COMAS','COMBO','COMBS','COMER','COMES','COMET','COMFY','COMIC','COMMA','COMPS','CONCH','CONDO','CONED','CONES','CONGA','CONGO','CONIC','CONKS','COOED','COOKS','COOLS','COOPS','COPED','COPES','COPRA','CORAL','CORDS','CORED','CORER','CORES','CORGI','CORKS','CORKY','CORNS','CORNY','CORPS','COSEC','COSET','COSTS','COUCH','COUGH','COULD','COUNT','COUPE','COUPS','COURT','COVEN','COVER','COVES','COVET','COWED','COWER','COWLS','COYLY','COZEN','COZES','CRABS','CRACK','CRAFT','CRAGS','CRAMP','CRAMS','CRANE','CRANK','CRAPS','CRASH','CRASS','CRATE','CRAVE','CRAWL','CRAWS','CRAZE','CRAZY','CREAK','CREAM','CREDO','CREED','CREEK','CREEL','CREEP','CREME','CREPE','CREPT','CRESS','CREST','CREWS','CRIBS','CRICK','CRIED','CRIER','CRIES','CRIME','CRIMP','CRISP','CROAK','CROCK','CROCS','CROFT','CRONE','CRONY','CROOK','CROON','CROPS','CROSS','CROUP','CROWD','CROWN','CROWS','CRUDE','CRUEL','CRUET','CRUMB','CRUMP','CRUSH','CRUST','CRYPT','CUBBY','CUBED','CUBES','CUBIC','CUBIT','CUFFS','CUING','CULLS','CULPA','CULTS','CUMIN','CUPID','CURBS','CURDS','CURED','CURES','CURLS','CURLY','CURRY','CURSE','CURVE','CURVY','CUSHY','CUSPS','CUTCH','CUTER','CUTIE','CYCLE','CYNIC','CYSTS'];
+        const wordsD = ['DACHA','DADDY','DAILY','DAIRY','DAISY','DALES','DALLY','DAMES','DAMNS','DAMPS','DANCE','DANDY','DARED','DARES','DARKS','DARNS','DARTS','DATED','DATER','DATES','DATUM','DAUBS','DAUNT','DAVIT','DAWNS','DAZED','DEALS','DEALT','DEANS','DEARS','DEARY','DEATH','DEBAR','DEBIT','DEBTS','DEBUD','DEBUG','DEBUT','DECAF','DECAL','DECAY','DECKS','DECOR','DECOY','DECRY','DEEDS','DEEMS','DEEPS','DEERS','DEFER','DEIFY','DEIGN','DEISM','DEIST','DEITY','DELAY','DELFT','DELIS','DELLS','DELTA','DELVE','DEMON','DEMOS','DEMUR','DENIM','DENSE','DENTS','DEPOT','DEPTH','DERBY','DESKS','DETER','DETOX','DEUCE','DEVIL','DHOTI','DIARY','DICED','DICER','DICES','DICEY','DICKS','DICKY','DICTA','DIETS','DIGIT','DIKES','DILLS','DILLY','DIMER','DIMES','DIMLY','DINAR','DINED','DINER','DINES','DINGO','DINGS','DINGY','DINKS','DINKY','DIODE','DIPPY','DIRER','DIRGE','DIRKS','DIRTY','DISCO','DISCS','DISHY','DISKS','DITCH','DITTO','DITTY','DITZY','DIVAN','DIVAS','DIVED','DIVER','DIVES','DIVOT','DIVVY','DIZZY','DOCKS','DODGE','DODGY','DODOS','DOERS','DOGGY','DOGMA','DOILY','DOING','DOLED','DOLES','DOLLS','DOLLY','DOLOR','DOLTS','DOMED','DOMES','DONEE','DONGS','DONNA','DONOR','DONUT','DOOMS','DOORS','DOOZY','DOPED','DOPER','DOPES','DOPEY','DORKS','DORKY','DORMS','DOSED','DOSES','DOTED','DOTES','DOTTY','DOUBT','DOUGH','DOULA','DOUSE','DOVED','DOVES','DOWDY','DOWED','DOWEL','DOWER','DOWNS','DOWNY','DOWRY','DOWSE','DOZED','DOZEN','DOZER','DOZES','DRABS','DRAFT','DRAGS','DRAIN','DRAKE','DRAMA','DRAMS','DRANK','DRAPE','DRAWL','DRAWN','DRAWS','DRAYS','DREAD','DREAM','DREAR','DREGS','DRESS','DRIED','DRIER','DRIES','DRIFT','DRILL','DRILY','DRINK','DRIPS','DRIVE','DROIT','DROLL','DRONE','DROOL','DROOP','DROPS','DROSS','DROVE','DROWN','DRUBS','DRUGS','DRUID','DRUMS','DRUNK','DRUPE','DRYAD','DRYER','DRYLY','DUALS','DUCAL','DUCAT','DUCKS','DUCKY','DUCTS','DUDES','DUELS','DUETS','DUFFS','DUKED','DUKES','DULLS','DULLY','DULSE','DUMBO','DUMBS','DUMMY','DUMPS','DUMPY','DUNCE','DUNES','DUNKS','DUPED','DUPES','DUPLE','DURAL','DUSKY','DUSTS','DUSTY','DUTCH','DUVET','DWARF','DWELL','DWELT','DYADS','DYERS','DYING','DYKED','DYKES'];
+        const wordsE = ['EAGER','EAGLE','EARED','EARLS','EARLY','EARNS','EARTH','EASED','EASEL','EASES','EATEN','EATER','EAVES','EBBED','EBONY','EBOOK','ECHOS','ECLAT','EDEMA','EDGED','EDGER','EDGES','EDICT','EDIFY','EDITS','EERIE','EGADS','EGGED','EGRET','EIDER','EIGHT','EJECT','EKING','ELAND','ELATE','ELBOW','ELDER','ELECT','ELEGY','ELIDE','ELITE','ELOPE','ELUDE','ELUTE','ELVEN','ELVES','EMAIL','EMBED','EMBER','EMCEE','EMEND','EMERY','EMIRS','EMITS','EMOTE','EMPTY','ENACT','ENDED','ENDOW','ENDUE','ENEMA','ENEMY','ENJOY','ENNUI','ENOKI','ENROL','ENSUE','ENTER','ENTRY','ENVOY','EPICS','EPOCH','EPOXY','EQUAL','EQUIP','ERASE','ERECT','ERGOT','ERODE','ERRED','ERROR','ERUPT','ESSAY','ESTER','ETHER','ETHIC','ETHOS','ETHYL','ETUDE','EUROS','EVADE','EVENS','EVENT','EVERY','EVICT','EVILS','EVOKE','EXACT','EXALT','EXAMS','EXCEL','EXECS','EXERT','EXILE','EXIST','EXITS','EXPAT','EXPEL','EXTOL','EXTRA','EXUDE','EXULT','EXURB','EYING','EYRIE'];
+        const wordsF = ['FABLE','FACED','FACER','FACES','FACET','FACTS','FADED','FADES','FAILS','FAINT','FAIRS','FAIRY','FAITH','FAKED','FAKER','FAKES','FALLS','FALSE','FAMED','FANCY','FANGS','FANNY','FARCE','FARED','FARES','FARMS','FARTS','FASTS','FATAL','FATED','FATES','FATTY','FAULT','FAUNA','FAUNS','FAVOR','FAWNS','FAXED','FAXES','FAZED','FAZES','FEARS','FEAST','FEATS','FECAL','FECES','FEEDS','FEELS','FEIGN','FEINT','FELLA','FELLS','FELON','FELTS','FEMME','FEMUR','FENCE','FENDS','FERAL','FERNS','FERNY','FERRY','FETAL','FETCH','FETED','FETES','FETID','FETUS','FEUDS','FEVER','FEWER','FIBER','FIBRE','FICUS','FIELD','FIEND','FIERY','FIFES','FIFTH','FIFTY','FIGHT','FILED','FILER','FILES','FILET','FILLS','FILLY','FILMS','FILMY','FILTH','FINAL','FINCH','FINED','FINER','FINES','FINIS','FINKS','FIORD','FIRED','FIRES','FIRMS','FIRST','FISHY','FISTS','FITCH','FITLY','FIVER','FIVES','FIXED','FIXER','FIXES','FIZZY','FJORD','FLACK','FLAGS','FLAIL','FLAIR','FLAKE','FLAKY','FLAME','FLANK','FLANS','FLAPS','FLARE','FLASH','FLASK','FLATS','FLAWS','FLAYS','FLEAS','FLECK','FLEES','FLEET','FLESH','FLICK','FLIED','FLIER','FLIES','FLING','FLINT','FLIPS','FLIRT','FLITS','FLOAT','FLOCK','FLOES','FLOGS','FLOOD','FLOOR','FLOPS','FLORA','FLOSS','FLOUR','FLOUT','FLOWN','FLOWS','FLUBS','FLUES','FLUFF','FLUID','FLUKE','FLUNG','FLUNK','FLUSH','FLUTE','FLYER','FOALS','FOAMS','FOAMY','FOCAL','FOCUS','FOGGY','FOILS','FOIST','FOLDS','FOLEY','FOLKS','FOLLY','FONTS','FOODS','FOOLS','FOOTS','FORAY','FORCE','FORGE','FORGO','FORKS','FORKY','FORMS','FORTE','FORTH','FORTS','FORTY','FORUM','FOUND','FOUNT','FOURS','FOWLS','FOXED','FOXES','FOYER','FRACK','FRAGS','FRAIL','FRAME','FRANC','FRANK','FRAUD','FRAYS','FREAK','FREED','FREES','FRESH','FRETS','FRIAR','FRIED','FRIES','FRILL','FRISK','FRITZ','FRIZZ','FROCK','FROGS','FROND','FRONT','FROST','FROTH','FROWN','FROZE','FRUIT','FRUMP','FRYER','FUBSY','FUCKS','FUDGE','FUDGY','FUELS','FUGAL','FUGUE','FULLY','FUMED','FUMES','FUNDS','FUNGI','FUNGO','FUNKS','FUNKY','FUNNY','FURLS','FUROR','FURRY','FURZE','FUSED','FUSES','FUSSY','FUSTY','FUTON','FUZZY'];
+        const wordsG = ['GABLE','GADGE','GAFFE','GAFFS','GAGED','GAGES','GAILY','GAINS','GAITS','GALAS','GALES','GALLS','GAMED','GAMER','GAMES','GAMMA','GAMUT','GANGS','GAPED','GAPER','GAPES','GARBS','GASES','GASPS','GASSY','GATED','GATES','GATOR','GAUDY','GAUGE','GAUNT','GAUZE','GAUZY','GAVEL','GAWKS','GAWKY','GAWPS','GAYER','GAYLY','GAZED','GAZER','GAZES','GEARS','GECKO','GEEKS','GEEKY','GEESE','GELID','GENES','GENIE','GENII','GENOA','GENRE','GENTS','GENUS','GEODE','GERMS','GERMY','GESSO','GETUP','GHOST','GHOUL','GIANT','GIBED','GIBES','GIDDY','GIFTS','GIGAS','GIGOT','GIGUE','GILDS','GILLS','GILTS','GIMPS','GINNY','GIRDS','GIRLS','GIRLY','GIRTH','GIRTS','GISMO','GISTS','GIVEN','GIVER','GIVES','GIZMO','GLADE','GLADS','GLAND','GLANS','GLARE','GLASS','GLAZE','GLEAM','GLEAN','GLEBE','GLEED','GLEES','GLENS','GLIDE','GLIMS','GLINT','GLITZ','GLOAT','GLOBE','GLOBS','GLOOM','GLORY','GLOSS','GLOVE','GLOWS','GLUED','GLUER','GLUES','GLUEY','GLUMS','GLUTS','GLYPH','GNARL','GNARS','GNASH','GNATS','GNAWS','GNOME','GOADS','GOALS','GOATS','GODLY','GOERS','GOFER','GOING','GOLDS','GOLFS','GONAD','GONER','GONGS','GONNA','GOODS','GOODY','GOOEY','GOOFS','GOOFY','GOONS','GOOSE','GORED','GORES','GORGE','GORSE','GOTTA','GOUGE','GOURD','GOUTS','GOUTY','GOWNS','GRABS','GRACE','GRADE','GRADS','GRAFT','GRAIL','GRAIN','GRAMS','GRAND','GRANT','GRAPE','GRAPH','GRASP','GRASS','GRATE','GRAVE','GRAVY','GRAYS','GRAZE','GREAT','GREBE','GREED','GREEK','GREEN','GREET','GREYS','GRIEF','GRILL','GRIME','GRIMY','GRIND','GRINS','GRIPE','GRIPS','GRIST','GRITS','GROAN','GROAT','GROIN','GROOM','GROPE','GROSS','GROUP','GROUT','GROVE','GROWL','GROWN','GROWS','GRUEL','GRUFF','GRUMP','GRUNT','GUANO','GUARD','GUAVA','GUESS','GUEST','GUIDE','GUILD','GUILE','GUILT','GUISE','GULAG','GULCH','GULFS','GULLS','GULLY','GULPS','GUMBO','GUMMY','GUNKS','GUNKY','GUNNY','GUPPY','GURLS','GURUS','GUSHY','GUSTO','GUSTS','GUSTY','GUTSY','GUYED','GUYOT','GYBED','GYBES','GYOZA'];
+        const wordsH = ['HABIT','HACKS','HADED','HADES','HAFTS','HAIKU','HAILS','HAIRS','HAIRY','HAJJI','HAKES','HALED','HALER','HALES','HALFS','HALLS','HALOS','HALTS','HALVE','HAMAL','HAMES','HAMMY','HANDS','HANDY','HANGS','HANKS','HAPPY','HARDY','HARED','HAREM','HARES','HARKS','HARMS','HARPS','HARPY','HARRY','HARSH','HASTE','HASTY','HATCH','HATED','HATER','HATES','HAULS','HAUNT','HAVEN','HAVER','HAVES','HAVOC','HAWKS','HAWSE','HAYED','HAZEL','HAZER','HAZES','HEADS','HEADY','HEALS','HEAPS','HEARD','HEARS','HEART','HEATH','HEATS','HEAVE','HEAVY','HEDGE','HEDGY','HEEDS','HEELS','HEFTY','HEIDI','HEIRS','HEIST','HELIX','HELLO','HELLS','HELMS','HELPS','HENCE','HENNA','HENRY','HERBS','HERDS','HERES','HERMS','HERON','HEROS','HEWED','HEWER','HEXED','HEXES','HICKS','HIDED','HIDER','HIDES','HIGHS','HIKED','HIKER','HIKES','HILAR','HILLS','HILLY','HILTS','HINDS','HINGE','HINTS','HIPPO','HIPPY','HIRED','HIRER','HIRES','HITCH','HIVED','HIVES','HOARD','HOARY','HOBBY','HOBOS','HOCKS','HOCUS','HOGAN','HOICK','HOIST','HOKEY','HOLDS','HOLED','HOLES','HOLEY','HOLLY','HOMED','HOMER','HOMES','HONED','HONES','HONEY','HONKS','HONOR','HOODS','HOOEY','HOOFS','HOOKS','HOOPS','HOOTS','HOPED','HOPER','HOPES','HORDE','HORNS','HORNY','HORSE','HOSED','HOSES','HOSTS','HOTEL','HOTLY','HOUND','HOURS','HOUSE','HOVEL','HOVER','HOWDY','HOWLS','HUBBY','HUFFS','HUFFY','HUGER','HULKS','HULKY','HULLS','HUMAN','HUMIC','HUMID','HUMOR','HUMPS','HUMUS','HUNCH','HUNKS','HUNKY','HUNTS','HURLS','HURRY','HURTS','HUSSY','HUTCH','HYDRA','HYDRO','HYENA','HYMEN','HYMNS','HYPED','HYPER','HYPES','HYPOS'];
+        const wordsI = ['ICHOR','ICIER','ICILY','ICING','ICKER','ICONS','ICTUS','IDEAL','IDEAS','IDIOM','IDIOT','IDLED','IDLER','IDLES','IDOLS','IDYLL','IGLOO','IGLUS','IKONS','IMAGE','IMAGO','IMAMS','IMBED','IMBUE','IMIDE','IMMIX','IMPED','IMPEL','IMPLY','INANE','INAPT','INCUR','INDEX','INDIE','INEPT','INERT','INFER','INFOS','INKED','INKER','INKLE','INLAY','INLET','INNED','INNER','INPUT','INSET','INTER','INTIS','INTRO','INURE','INURN','IODIC','IONIC','IOTAS','IRATE','IRKED','IRONS','IRONY','ISLES','ISLET','ISSUE','ITCHY','ITEMS','IVIED','IVIES','IVORY'];
+        const wordsJ = ['JABOT','JACKS','JADED','JADES','JAILS','JAKES','JALAP','JAMBS','JAMES','JAMMY','JANES','JAPED','JAPER','JAPES','JARLS','JAUNT','JAWED','JAZZY','JEANS','JEEPS','JEERS','JELLS','JELLY','JEMMY','JENNY','JERKS','JERKY','JERRY','JESSE','JESTS','JETTY','JEWEL','JIBED','JIBES','JIFFS','JIFFY','JIHAD','JILTS','JIMMY','JIMPY','JINGO','JINKS','JINNI','JINNS','JIVED','JIVES','JOCKO','JOCKS','JOCKY','JOHNS','JOINS','JOINT','JOIST','JOKED','JOKER','JOKES','JOKEY','JOLLY','JOLTS','JOLTY','JONES','JOUST','JOWLS','JOWLY','JOYED','JUBAS','JUDAS','JUDGE','JUDOS','JUICE','JUICY','JUJUS','JUKED','JUKES','JUMBO','JUMPS','JUMPY','JUNCO','JUNKS','JUNKY','JUNTA','JUNTO','JUROR','JUSTS'];
+        const wordsK = ['KABOB','KAPOK','KAPUT','KARAT','KARMA','KARST','KARTS','KAYAK','KAYOS','KAZOO','KEBAB','KEBOB','KEELS','KEENS','KEEPS','KELPS','KEMPT','KERBS','KERNS','KETCH','KEYED','KHAKI','KICKS','KIDDO','KIDDY','KILNS','KILOS','KILTS','KINDS','KINES','KINGS','KINKS','KINKY','KIOSK','KISSY','KITED','KITES','KITTY','KIWIS','KLIEG','KLUTZ','KNACK','KNAVE','KNEAD','KNEED','KNEEL','KNEES','KNELL','KNELT','KNIFE','KNITS','KNOBS','KNOCK','KNOLL','KNOTS','KNOWN','KNOWS','KOALA','KOANS','KOOKY','KORAN','KUDOS','KUDZU'];
+        const wordsL = ['LABEL','LABOR','LACED','LACER','LACES','LACKS','LADED','LADEN','LADES','LADLE','LAGER','LAIRS','LAIRD','LAITY','LAKED','LAKER','LAKES','LAKHS','LAMAS','LAMBS','LAMED','LAMER','LAMES','LAMPS','LANCE','LANDS','LANES','LANKY','LAPEL','LAPIN','LAPSE','LARCH','LARDS','LARDY','LARGE','LARGO','LARKS','LARVA','LASED','LASER','LASES','LASSO','LASTS','LATCH','LATER','LATEX','LATHE','LATHS','LATTE','LAUDS','LAUGH','LAVES','LAWNS','LAWNY','LAXER','LAXLY','LAYER','LAYIN','LAYUP','LAZED','LAZES','LEACH','LEADS','LEAFS','LEAFY','LEAKS','LEAKY','LEANS','LEANT','LEAPS','LEAPT','LEARN','LEASE','LEASH','LEAST','LEAVE','LEDGE','LEDGY','LEECH','LEEKS','LEERS','LEERY','LEFTS','LEFTY','LEGAL','LEGER','LEGGY','LEGIT','LEMON','LEMUR','LENDS','LENOS','LENSE','LENTO','LEONE','LEPER','LESTS','LETUP','LEVEE','LEVEL','LEVER','LEXIS','LIANA','LIARS','LIBEL','LIEGE','LIENS','LIEST','LIFER','LIFTS','LIGHT','LIKED','LIKEN','LIKER','LIKES','LILAC','LILTS','LIMBO','LIMBS','LIMED','LIMEN','LIMES','LIMEY','LIMIT','LIMNS','LIMOS','LIMPS','LINED','LINEN','LINER','LINES','LINGO','LINGS','LINKS','LINTY','LIONS','LIPID','LISLE','LISPS','LISTS','LITER','LITHE','LITRE','LIVED','LIVEN','LIVER','LIVES','LIVID','LLAMA','LLANO','LOADS','LOAFS','LOAMS','LOAMY','LOANS','LOATH','LOBAR','LOBBY','LOBED','LOBES','LOCAL','LOCHS','LOCKS','LOCOS','LOCUS','LODEN','LODGE','LOFTS','LOFTY','LOGAN','LOGES','LOGIC','LOINS','LOLLS','LONER','LONGS','LOOBY','LOOED','LOOEY','LOOFS','LOOKS','LOOMS','LOONS','LOONY','LOOPS','LOOPY','LOOSE','LOOTS','LOPED','LOPER','LOPES','LORDS','LORES','LORRY','LOSER','LOSES','LOSSY','LOTAS','LOTTO','LOTUS','LOUGH','LOUIS','LOUSE','LOUSY','LOUTS','LOVED','LOVER','LOVES','LOWER','LOWLY','LOXED','LOXES','LOYAL','LUAUS','LUBED','LUBES','LUCID','LUCKS','LUCKY','LUDES','LUDIC','LUFFA','LUFFS','LUGED','LUGER','LUGES','LULLS','LULUS','LUMEN','LUMPS','LUMPY','LUNAR','LUNAS','LUNCH','LUNES','LUNGE','LUNGS','LUNKS','LUPUS','LURCH','LURED','LURER','LURES','LUREX','LURID','LURKS','LUSHY','LUSTS','LUSTY','LUTED','LUTES','LUXED','LUXES','LYING','LYMPH','LYNCH','LYRES','LYRIC','LYSED','LYSES'];
+        const wordsM = ['MACAW','MACED','MACER','MACES','MACHO','MACRO','MADAM','MADLY','MAFIA','MAGIC','MAGMA','MAGUS','MAIDS','MAILS','MAIMS','MAINS','MAIZE','MAJOR','MAKER','MAKES','MALES','MALLS','MALTS','MALTY','MAMAS','MAMBA','MAMBO','MANED','MANES','MANGA','MANGE','MANGO','MANGY','MANIA','MANIC','MANLY','MANNA','MANOR','MANSE','MANTA','MAPLE','MARCH','MARES','MARGE','MARKS','MARLS','MARRY','MARSH','MARTS','MASER','MASKS','MASON','MASSE','MASSY','MASTS','MATCH','MATED','MATER','MATES','MATEY','MATHS','MATIN','MATTE','MAULS','MAUVE','MAVEN','MAVIN','MAWED','MAXED','MAXES','MAXIM','MAYBE','MAYOR','MAZED','MAZER','MAZES','MEADS','MEALS','MEALY','MEANS','MEANT','MEANY','MEATS','MEATY','MECCA','MEDAL','MEDIA','MEDIC','MEEDS','MEEKS','MEETS','MELEE','MELON','MELTS','MEMES','MEMOS','MENDS','MENUS','MEOWS','MERCY','MERGE','MERIT','MERRY','MESHY','MESON','MESSY','METAL','METED','METER','METES','METRE','METRO','MEWED','MEWLS','MEZZO','MIAOW','MICAS','MICRO','MIDDY','MIDGE','MIDST','MIENS','MIGHT','MIKED','MIKES','MILCH','MILDS','MILED','MILER','MILES','MILKS','MILKY','MILLS','MIMED','MIMEO','MIMES','MIMIC','MINCE','MINCY','MINDS','MINED','MINER','MINES','MINGY','MINIM','MINIS','MINKS','MINOR','MINTS','MINTY','MINUS','MIRED','MIRES','MIRTH','MISER','MISSY','MISTS','MISTY','MITER','MITES','MITRE','MITTS','MIXED','MIXER','MIXES','MOANS','MOATS','MOCHA','MOCKS','MODAL','MODEL','MODEM','MODES','MOGUL','MOIST','MOLAL','MOLAR','MOLDS','MOLDY','MOLES','MOLLS','MOLLY','MOLTS','MOMMY','MONAD','MONDE','MONEY','MONGO','MONKS','MONTE','MONTH','MOOCH','MOODS','MOODY','MOOED','MOONS','MOONY','MOORS','MOOSE','MOOTS','MOPED','MOPER','MOPES','MOPEY','MORAL','MORAY','MOREL','MORES','MORNS','MORON','MORPH','MORSE','MORTS','MOSSY','MOSTE','MOTEL','MOTES','MOTET','MOTHS','MOTIF','MOTOR','MOTTO','MOULD','MOULT','MOUND','MOUNT','MOURN','MOUSE','MOUSY','MOUTH','MOVED','MOVER','MOVES','MOVIE','MOWED','MOWER','MOXIE','MUCUS','MUDDY','MUFFS','MUGGY','MULCH','MULED','MULES','MULLS','MUMMY','MUMPS','MUNCH','MUNGE','MUNGS','MURAL','MURED','MURES','MURKS','MURKY','MUSED','MUSER','MUSES','MUSHY','MUSIC','MUSKS','MUSKY','MUSOS','MUSSY','MUSTH','MUSTS','MUSTY','MUTED','MUTER','MUTES','MUTTS','MUZAK','MUZZY','MYNAS','MYRRH','MYTHS'];
+        const wordsN = ['NABOB','NACHO','NACRE','NADIR','NAIAD','NAILS','NAIVE','NAKED','NAMED','NAMER','NAMES','NANNY','NAPED','NAPES','NAPPY','NARCS','NASAL','NASTY','NATAL','NATCH','NATES','NAVAL','NAVEL','NAVES','NAVVY','NAZIS','NEAPS','NEARS','NEATH','NEATS','NECKS','NEEDS','NEEDY','NEIGH','NEONS','NERDS','NERDY','NERVE','NERVY','NESTS','NEVER','NEWEL','NEWER','NEWLY','NEWSY','NEWTS','NEXTS','NEXUS','NICER','NICHE','NICKS','NIECE','NIFTY','NIGHS','NIGHT','NINES','NINJA','NINNY','NINTH','NIPPY','NITER','NITES','NITRE','NITRO','NITTY','NIXED','NIXES','NOBLE','NOBLY','NOCKS','NODAL','NODDY','NODES','NODUS','NOELS','NOISE','NOISY','NOMAD','NONCE','NONES','NONET','NOOKS','NOOKY','NOONS','NOOSE','NORMS','NORTH','NOSED','NOSES','NOSEY','NOTCH','NOTED','NOTER','NOTES','NOUNS','NOVAE','NOVAS','NOVEL','NOWAY','NOXAL','NOXES','NUBBY','NUBIA','NUCHA','NUDER','NUDES','NUDGE','NUKED','NUKES','NULLS','NUMBS','NURSE','NUTTY','NYLON','NYMPH'];
+        const wordsO = ['OAKEN','OAKUM','OARED','OASES','OASIS','OATEN','OATER','OATHS','OBEAH','OBESE','OBEYS','OBITS','OBJET','OBOES','OCCUR','OCEAN','OCHER','OCHRE','OCTAD','OCTAL','OCTET','OCTYL','ODDER','ODDLY','ODEON','ODIUM','ODORS','ODOUR','OFFAL','OFFED','OFFER','OFTEN','OGLED','OGLER','OGLES','OGRES','OHMIC','OILED','OILER','OINKS','OKAPI','OKAYS','OKRAS','OLDEN','OLDER','OLDIE','OLEOS','OLIVE','OLLAS','OMBRE','OMEGA','OMENS','OMITS','ONCER','ONCES','ONCET','ONION','ONIUM','ONSET','OOHED','OOMPH','OOZED','OOZES','OPAHS','OPALS','OPENS','OPERA','OPINE','OPIUM','OPTED','OPTIC','ORALS','ORANG','ORATE','ORBED','ORBIT','ORCAS','ORDER','ORGAN','ORIBI','ORIEL','OTHER','OTTER','OUGHT','OUNCE','OUPHE','OUSEL','OUSTS','OUTDO','OUTED','OUTER','OUTGO','OUTRO','OUZEL','OUZOS','OVALS','OVARY','OVATE','OVENS','OVERS','OVERT','OVINE','OVOID','OVULE','OWING','OWLET','OWNED','OWNER','OXBOW','OXIDE','OXIDS','OXTER','OYERS','OZONE','OZZIE'];
+        const wordsP = ['PACED','PACER','PACES','PACKS','PACTS','PADDY','PADRE','PAEAN','PAGAN','PAGED','PAGER','PAGES','PAILS','PAINS','PAINT','PAIRS','PALED','PALER','PALES','PALLS','PALMS','PALMY','PALSY','PANDA','PANED','PANEL','PANES','PANGS','PANIC','PANSY','PANTS','PANTY','PAPAL','PAPAS','PAPAW','PAPER','PARCH','PARDS','PARED','PARER','PARES','PARGE','PARIS','PARKA','PARKS','PARLE','PARRY','PARSE','PARTS','PARTY','PARVE','PASHA','PASSE','PASTA','PASTE','PASTS','PASTY','PATCH','PATED','PATEN','PATER','PATES','PATHS','PATIO','PATSY','PATTY','PAUSE','PAVED','PAVER','PAVES','PAWED','PAWER','PAWLS','PAWNS','PAYED','PAYEE','PAYER','PEACE','PEACH','PEAKS','PEAKY','PEALS','PEARL','PEARS','PEART','PEASE','PEASY','PEATS','PEATY','PECAN','PECKS','PEDAL','PEEKS','PEELS','PEENS','PEEPS','PEERS','PEEVE','PEINS','PEISE','PEKAN','PEKES','PEKIN','PEKOE','PELFS','PELTS','PENAL','PENCE','PENDS','PENES','PENIS','PENNA','PENNY','PEONS','PEONY','PEPLA','PEPOS','PEPPY','PERCH','PERDU','PERDY','PERES','PERIL','PERKS','PERKY','PERMS','PERPS','PERRY','PESKY','PESOS','PESTO','PESTS','PETAL','PETER','PETIT','PETTI','PETTO','PETTY','PEWIT','PHASE','PHONE','PHONY','PHOTO','PHYLA','PIANO','PICAS','PICKS','PICKY','PICOT','PIECE','PIERS','PIETY','PIGGY','PIGMY','PIKAS','PIKED','PIKER','PIKES','PILAF','PILAR','PILEA','PILED','PILES','PILLS','PILOT','PILUS','PIMPS','PINCH','PINED','PINES','PINEY','PINGS','PINKO','PINKS','PINKY','PINNA','PINNY','PINON','PINOT','PINTA','PINTO','PINTS','PINUP','PIONS','PIOUS','PIPAL','PIPED','PIPER','PIPES','PIPET','PIPIT','PIQUE','PIRNS','PISCO','PISOS','PISTE','PITAS','PITCH','PITHS','PITHY','PITON','PITTA','PIVOT','PIXEL','PIXIE','PIZZA','PLACE','PLAID','PLAIN','PLAIT','PLANE','PLANK','PLANS','PLANT','PLATE','PLATS','PLATY','PLAYS','PLAZA','PLEAD','PLEAS','PLEAT','PLEBS','PLENA','PLIES','PLODS','PLONK','PLOPS','PLOTS','PLOWS','PLOYS','PLUCK','PLUGS','PLUMB','PLUME','PLUMP','PLUMS','PLUNG','PLUNK','PLUSH','PLYER','POACH','POCKS','POCKY','PODGY','POEMS','POESY','POETS','POGEY','POIND','POINT','POISE','POKED','POKER','POKES','POKEY','POLAR','POLED','POLER','POLES','POLIO','POLIS','POLKA','POLLS','POLLY','POLOS','POLYP','POLYS','POMBE','POMMY','POMOS','POMPS','PONCE','PONDS','PONES','PONGA','PONGO','PONGS','PONGY','POOCH','POODS','POOED','POOFS','POOFY','POOHS','POOJA','POOKA','POOLS','POONS','POOPS','POORI','POOVE','POPES','POPPA','POPPY','POPSY','PORCH','PORED','PORER','PORES','PORGE','PORGY','PORKS','PORKY','PORNO','PORNS','PORNY','PORTS','POSED','POSER','POSES','POSIT','POSSE','POSTS','POTCH','POTED','POTES','POTIN','POTSY','POTTO','POTTY','POTUS','POUCH','POUFF','POUFS','POULE','POULP','POULT','POUND','POURS','POUTS','POUTY','POWER','POXED','POXES','PRAMS','PRANA','PRANG','PRANK','PRAOS','PRASE','PRATE','PRATS','PRATT','PRAUS','PRAWN','PRAYS','PREED','PREEN','PREES','PREIF','PREMS','PREON','PREOP','PREPS','PRESA','PRESE','PRESS','PREST','PREVE','PREXY','PREYS','PRICE','PRICK','PRICY','PRIDE','PRIED','PRIER','PRIES','PRIGS','PRIMA','PRIME','PRIMI','PRIMO','PRIMP','PRIMS','PRIMY','PRINK','PRINT','PRION','PRIOR','PRISE','PRISM','PRISS','PRIVY','PRIZE','PROAS','PROBE','PROBS','PRODS','PROEM','PROFS','PROGS','PROIN','PROKE','PROLE','PROMO','PROMS','PRONE','PRONG','PROOF','PROPS','PRORE','PROSE','PROSO','PROSS','PROST','PROSY','PROTO','PROUD','PROVE','PROWL','PROWS','PROXY','PROYN','PRUDE','PRUNE','PRUNO','PRUNT','PRUTA','PRYER','PRYSE','PSALM','PSEUD','PSHAW','PSION','PSOAS','PSORA','PSYCH','PSYOP','PUBCO','PUBES','PUBIC','PUBIS','PUCAN','PUCER','PUCES','PUCKA','PUCKS','PUDDY','PUDGE','PUDGY','PUDIC','PUDOR','PUDSY','PUDUS','PUERS','PUFFS','PUFFY','PUGGY','PUGIL','PUHAS','PUJAH','PUJAS','PUKAS','PUKED','PUKER','PUKES','PUKEY','PUKKA','PUKUS','PULAO','PULAS','PULED','PULER','PULES','PULIK','PULIS','PULKA','PULKS','PULLI','PULLS','PULMO','PULPS','PULPY','PULSE','PULUS','PUMAS','PUMIE','PUMPS','PUNAS','PUNCE','PUNCH','PUNGA','PUNGS','PUNJI','PUNKA','PUNKS','PUNKY','PUNNY','PUNTO','PUNTS','PUNTY','PUPAE','PUPAL','PUPAS','PUPIL','PUPPY','PUPUS','PURDA','PURED','PUREE','PURER','PURES','PURGE','PURIN','PURIS','PURLS','PURPY','PURRS','PURSE','PURSY','PURTY','PUSES','PUSHY','PUSLE','PUSSY','PUTAS','PUTTO','PUTTS','PUTTY','PUZEL','PWNED','PYATS','PYETS','PYGAL','PYGMY','PYINS','PYLON','PYNED','PYNES','PYOID','PYOTS','PYRAL','PYRAN','PYRES','PYREX','PYRIC','PYROS','PYXED','PYXES','PYXIE','PYXIS','PZAZZ'];
+        const wordsQ = ['QUACK','QUAFF','QUAGS','QUAIL','QUAIS','QUAKE','QUAKY','QUALE','QUALM','QUANT','QUARE','QUARK','QUART','QUASH','QUASI','QUASS','QUATE','QUATS','QUAYD','QUAYS','QUBIT','QUEAN','QUEEN','QUEER','QUELL','QUEME','QUENA','QUERN','QUERY','QUEST','QUEUE','QUEYN','QUEYS','QUICH','QUICK','QUIDS','QUIET','QUIFF','QUILL','QUILT','QUIMS','QUINA','QUINE','QUINO','QUINS','QUINT','QUIPO','QUIPS','QUIPU','QUIRE','QUIRK','QUIRT','QUITE','QUITS','QUOAD','QUODS','QUOIF','QUOIN','QUOIT','QUOLL','QUONK','QUOPS','QUORN','QUOTA','QUOTE','QUOTH','QURSH','QUYTE'];
+        const wordsR = ['RABBI','RABID','RACED','RACER','RACES','RACKS','RADAR','RADII','RADIO','RADIX','RADON','RAFTS','RAGED','RAGES','RAGGS','RAGGY','RAIDS','RAILS','RAINS','RAINY','RAISE','RAITA','RAJAH','RAJAS','RAKED','RAKER','RAKES','RAKIS','RALLY','RALPH','RAMPS','RANCH','RANDS','RANDY','RANEE','RANGE','RANGY','RANID','RANIS','RANKS','RANTS','RAPED','RAPER','RAPES','RAPHE','RAPID','RARED','RARER','RARES','RASED','RASER','RASES','RASPS','RASPY','RATAL','RATAN','RATCH','RATED','RATEL','RATER','RATES','RATHE','RATIO','RATOO','RATOS','RATTY','RATUS','RAUNS','RAUPO','RAVED','RAVEL','RAVEN','RAVER','RAVES','RAVIN','RAWER','RAWIN','RAWLY','RAWNS','RAXED','RAXES','RAYAH','RAYAS','RAYED','RAYLE','RAYNE','RAYON','RAZED','RAZEE','RAZER','RAZES','RAZOR','RAZOO','REACH','REACT','READD','READS','READY','REAIS','REAKS','REALM','REALO','REALS','REAME','REAMS','REAMY','REANS','REAPS','REARM','REARS','REAST','REATA','REATE','REAVE','REBAR','REBBE','REBEC','REBEL','REBID','REBIT','REBOP','REBUS','REBUT','REBUY','RECAL','RECAP','RECCE','RECCO','RECIT','RECKS','RECON','RECTA','RECTI','RECTO','RECUR','RECUT','REDAN','REDDS','REDDY','REDED','REDES','REDIA','REDID','REDIP','REDLY','REDON','REDOS','REDOX','REDRY','REDUB','REDUX','REDYE','REECH','REEDE','REEDS','REEDY','REEFS','REEFY','REEKS','REEKY','REELS','REENS','REEST','REEVE','REFED','REFEL','REFER','REFFO','REFIS','REFIT','REFIX','REFLY','REFRY','REGAL','REGAR','REGES','REGEX','REGGO','REGIE','REGMA','REGNA','REGOS','REGUR','REHAB','REHEM','REIFS','REIFY','REIGN','REIKI','REIKS','REINK','REINS','REIRD','REIST','REIVE','REJIG','REJON','REKED','REKES','REKEY','RELAX','RELAY','RELET','RELIC','RELIE','RELIT','RELLO','REMAN','REMAP','REMEN','REMET','REMEX','REMIT','REMIX','RENAL','RENAY','RENDS','RENEW','RENEY','RENGA','RENIG','RENIN','RENNE','RENOS','RENTE','RENTS','RENVS','REOIL','REORG','REPAY','REPEG','REPEL','REPIN','REPLY','REPOS','REPOT','REPPS','REPRO','RERAN','RERED','RERIG','RERUN','RESAT','RESAW','RESAY','RESEE','RESES','RESET','RESEW','RESID','RESIN','RESIT','RESOD','RESOW','RESTS','RESTY','RESUS','RETAG','RETAX','RETCH','RETEM','RETIA','RETIE','RETOX','RETRO','RETRY','REUSE','REVEL','REVET','REVIE','REVUE','REWAN','REWAX','REWED','REWET','REWIN','REWON','REWTH','REXES','REZES','RHEAS','RHEME','RHEUM','RHIES','RHIME','RHINE','RHINO','RHODY','RHOMB','RHONE','RHUMB','RHYME','RHYNE','RHYTA','RIALS','RIANT','RIATA','RIBAS','RIBBY','RIBES','RICED','RICER','RICES','RICEY','RICHT','RICIN','RICKS','RIDER','RIDES','RIDGE','RIDGY','RIDIC','RIELS','RIEMS','RIEVE','RIFER','RIFFS','RIFLE','RIFTS','RIFTY','RIGHT','RIGID','RIGOL','RIGOR','RILED','RILES','RILEY','RILLS','RIMAE','RIMED','RIMER','RIMES','RIMUS','RINDS','RINDY','RINES','RINGS','RINKS','RINSE','RIOJA','RIOTS','RIPED','RIPEN','RIPER','RIPES','RIPPS','RISEN','RISER','RISES','RISHI','RISKS','RISKY','RISPS','RISUS','RITES','RITTS','RITZY','RIVAL','RIVAS','RIVED','RIVEL','RIVEN','RIVER','RIVES','RIVET','RIYAL','RIZAS','ROACH','ROADS','ROAMS','ROANS','ROARS','ROARY','ROAST','ROATE','ROBED','ROBES','ROBIN','ROBLE','ROBOT','ROCKS','ROCKY','RODED','RODEO','RODES','ROGER','ROGUE','ROGUY','ROHES','ROIDS','ROILS','ROILY','ROINS','ROIST','ROJAK','ROJIS','ROKED','ROKER','ROKES','ROLAG','ROLES','ROLFS','ROLLS','ROMAL','ROMAN','ROMEO','ROMPS','RONDE','RONDO','RONEO','RONES','RONIN','RONNE','RONTE','RONTS','ROODS','ROOFS','ROOFY','ROOKS','ROOKY','ROOMS','ROOMY','ROONS','ROOPS','ROOPY','ROOSA','ROOSE','ROOST','ROOTS','ROOTY','ROPED','ROPER','ROPES','ROPEY','ROQUE','RORAL','RORES','RORIC','RORID','RORIE','RORTS','RORTY','ROSED','ROSES','ROSET','ROSHI','ROSIN','ROSIT','ROSTI','ROSTS','ROTAL','ROTAN','ROTAS','ROTCH','ROTED','ROTES','ROTIS','ROTLS','ROTON','ROTOR','ROTOS','ROTTE','ROUEN','ROUES','ROUGE','ROUGH','ROULE','ROULS','ROUMS','ROUND','ROUPS','ROUPY','ROUSE','ROUST','ROUTE','ROUTH','ROUTS','ROVED','ROVEN','ROVER','ROVES','ROWAN','ROWDY','ROWED','ROWEL','ROWEN','ROWER','ROWME','ROWND','ROWNS','ROWTH','ROWTS','ROYAL','ROYNE','ROYST','ROZET','ROZIT','RUANA','RUBAI','RUBBY','RUBEL','RUBES','RUBIN','RUBLE','RUBLI','RUBUS','RUCHE','RUCKS','RUDAS','RUDDS','RUDDY','RUDER','RUDES','RUDIE','RUDIS','RUEDA','RUERS','RUFFE','RUFFS','RUGAE','RUGAL','RUGBY','RUGGY','RUINS','RULED','RULER','RULES','RUMAL','RUMBA','RUMBO','RUMEN','RUMES','RUMLY','RUMMY','RUMOR','RUMPO','RUMPS','RUMPY','RUNCH','RUNDS','RUNED','RUNES','RUNGS','RUNIC','RUNNY','RUNTS','RUNTY','RUPEE','RURAL','RURPS','RURUS','RUSAS','RUSES','RUSHY','RUSKS','RUSMA','RUSSE','RUSTS','RUSTY','RUTHS','RUTIN','RUTTY','RYALS','RYBAT','RYKED','RYKES','RYMME','RYNDS','RYOTS','RYPER'];
+        const wordsS = ['SABLE','SABOT','SABRA','SABRE','SACKS','SACRA','SADLY','SAFER','SAFES','SAGES','SAGGY','SAHIB','SAILS','SAINT','SAITH','SAKIS','SALAD','SALAL','SALAT','SALEP','SALES','SALIC','SALLY','SALMI','SALOL','SALON','SALPA','SALPS','SALSA','SALSE','SALTO','SALTS','SALTY','SALUE','SALUT','SALVE','SALVO','SAMAN','SAMAS','SAMBA','SAMBO','SAMEK','SAMEL','SAMEN','SAMES','SAMEY','SAMFU','SAMMY','SAMPI','SAMPS','SANDS','SANDY','SANED','SANER','SANES','SANGA','SANGH','SANGS','SANKO','SANSA','SANTA','SANTO','SANTS','SAPAN','SAPID','SAPOR','SAPPY','SARAN','SARDS','SARED','SAREE','SARGE','SARGO','SARIN','SARIS','SARKS','SARKY','SAROD','SAROS','SARUS','SASER','SASIN','SASSE','SASSY','SATAI','SATAY','SATED','SATEM','SATES','SATIN','SATIS','SATYR','SAUCE','SAUCH','SAUCY','SAUGH','SAULS','SAULT','SAUNA','SAUNT','SAURA','SAURY','SAUTE','SAUTS','SAVED','SAVER','SAVES','SAVEY','SAVIN','SAVOR','SAVOY','SAVVY','SAWAH','SAWED','SAWER','SAXES','SAYED','SAYER','SAYID','SAYNE','SAYON','SAYST','SAZES','SCABS','SCADS','SCAFF','SCAGS','SCAIL','SCALA','SCALD','SCALE','SCALL','SCALP','SCALY','SCAMP','SCAMS','SCAND','SCANS','SCANT','SCAPA','SCAPE','SCAPI','SCARE','SCARF','SCARP','SCARS','SCART','SCARY','SCATH','SCATS','SCATT','SCAUD','SCAUP','SCAUR','SCAWS','SCEAT','SCENA','SCEND','SCENE','SCENT','SCHAV','SCHMO','SCHUL','SCHWA','SCION','SCLIM','SCODY','SCOFF','SCOGS','SCOLD','SCONE','SCOOG','SCOOP','SCOOT','SCOPA','SCOPE','SCOPS','SCORE','SCORN','SCOTS','SCOUG','SCOUP','SCOUR','SCOUT','SCOWL','SCOWP','SCOWS','SCRAB','SCRAE','SCRAG','SCRAM','SCRAN','SCRAP','SCRAT','SCRAW','SCRAY','SCREE','SCREW','SCRIM','SCRIP','SCROB','SCROD','SCROG','SCROW','SCRUB','SCRUM','SCUBA','SCUDI','SCUDO','SCUDS','SCUFF','SCUFT','SCUGS','SCULK','SCULL','SCULP','SCULS','SCUMS','SCUPS','SCURF','SCURS','SCUSE','SCUTA','SCUTE','SCUTS','SCUZZ','SCYES','SDAYN','SDEIN','SEALS','SEAME','SEAMS','SEAMY','SEANS','SEARE','SEARS','SEASE','SEATS','SEAZE','SEBUM','SECCO','SECHS','SECTS','SEDAN','SEDER','SEDES','SEDGE','SEDGY','SEDUM','SEEDS','SEEDY','SEEKS','SEELD','SEELS','SEELY','SEEMS','SEEPS','SEEPY','SEERS','SEFER','SEGAR','SEGNI','SEGNO','SEGOL','SEGUE','SEHRI','SEIFS','SEILS','SEINE','SEIRS','SEISE','SEISM','SEITY','SEIZA','SEIZE','SEKOS','SEKTS','SELAH','SELES','SELFS','SELLA','SELLE','SELLS','SELVA','SEMEE','SEMEN','SEMES','SEMIE','SEMIS','SENAS','SENDS','SENES','SENGI','SENNA','SENOR','SENSA','SENSE','SENSI','SENTE','SENTI','SENTS','SENVY','SENZA','SEPAD','SEPAL','SEPIC','SEPOY','SEPTA','SEPTS','SERAC','SERAI','SERAL','SERED','SERER','SERES','SERFS','SERGE','SERIC','SERIF','SERIN','SERKS','SERON','SEROW','SERRA','SERRE','SERRS','SERRY','SERUM','SERVE','SERVO','SESEY','SESSA','SETAE','SETAL','SETON','SETTS','SETUP','SEVEN','SEVER','SEWAN','SEWAR','SEWED','SEWEL','SEWEN','SEWER','SEWIN','SEXED','SEXER','SEXES','SEXTO','SEXTS','SEYEN','SHACK','SHADE','SHADS','SHADY','SHAFT','SHAGS','SHAHS','SHAKE','SHAKO','SHAKT','SHAKY','SHALE','SHALL','SHALM','SHALT','SHALY','SHAMA','SHAME','SHAMS','SHAND','SHANK','SHANS','SHAPE','SHAPS','SHARD','SHARE','SHARK','SHARN','SHARP','SHASH','SHAUL','SHAVE','SHAWL','SHAWM','SHAWN','SHAWS','SHAYA','SHAYS','SHCHI','SHEAF','SHEAL','SHEAR','SHEAS','SHEDS','SHEEL','SHEEN','SHEEP','SHEER','SHEET','SHEIK','SHELF','SHELL','SHEND','SHENT','SHEOL','SHERD','SHERE','SHERO','SHETS','SHEVA','SHEWN','SHEWS','SHIAI','SHIED','SHIEL','SHIER','SHIES','SHIFT','SHILL','SHILY','SHIMS','SHINE','SHINS','SHINY','SHIPS','SHIRE','SHIRK','SHIRR','SHIRS','SHIRT','SHISH','SHISO','SHIST','SHITE','SHITS','SHIUR','SHIVA','SHIVE','SHIVS','SHLEP','SHLUB','SHMEK','SHMOE','SHNOR','SHOAL','SHOAT','SHOCK','SHODE','SHOED','SHOER','SHOES','SHOGI','SHOGS','SHOJI','SHOLA','SHONE','SHOOK','SHOOL','SHOON','SHOOP','SHOOS','SHOOT','SHOPE','SHOPS','SHORE','SHORL','SHORN','SHORT','SHOTE','SHOTS','SHOTT','SHOUT','SHOVE','SHOWD','SHOWN','SHOWS','SHOWY','SHOYU','SHRED','SHREW','SHRIS','SHROG','SHROW','SHRUB','SHRUG','SHTIK','SHTUM','SHTUP','SHUCK','SHULE','SHULN','SHULS','SHUNS','SHUNT','SHURA','SHURE','SHUSH','SHUTE','SHUTS','SHWAS','SHYER','SHYLY','SIALS','SIBBS','SIBYL','SICES','SICHT','SICKO','SICKS','SICKY','SIDAS','SIDED','SIDER','SIDES','SIDEY','SIDHA','SIDHE','SIDLE','SIEGE','SIELD','SIENS','SIENT','SIETH','SIEUR','SIEVE','SIFTS','SIGHS','SIGHT','SIGIL','SIGLA','SIGMA','SIGNA','SIGNS','SIJOS','SIKAS','SIKER','SIKES','SILDS','SILED','SILEN','SILER','SILES','SILEX','SILKS','SILKY','SILLS','SILLY','SILOS','SILTS','SILTY','SILVA','SIMAR','SIMAS','SIMBA','SIMIS','SIMPS','SIMUL','SINCE','SINDS','SINED','SINES','SINEW','SINGE','SINGS','SINKS','SINKY','SINUS','SIPED','SIPES','SIPPY','SIRED','SIREE','SIREN','SIRES','SIRIH','SIRIS','SIROC','SIRRA','SIRUP','SISAL','SISES','SISSY','SISTA','SISTS','SITAR','SITED','SITES','SITHE','SITKA','SITUP','SITUS','SIVER','SIXER','SIXES','SIXTH','SIXTY','SIZAR','SIZED','SIZEL','SIZER','SIZES','SKAGS','SKAIL','SKALD','SKANK','SKART','SKATE','SKATS','SKATT','SKAWS','SKEAN','SKEAR','SKEDS','SKEED','SKEEF','SKEEG','SKEEN','SKEER','SKEES','SKEET','SKEGG','SKEGS','SKEIN','SKELF','SKELL','SKELM','SKELP','SKENE','SKENS','SKEOS','SKEPS','SKERS','SKETS','SKEWS','SKIDS','SKIED','SKIER','SKIES','SKIEY','SKIFF','SKILL','SKIMO','SKIMP','SKIMS','SKINK','SKINS','SKINT','SKIOS','SKIPS','SKIRL','SKIRR','SKIRT','SKITE','SKITS','SKIVE','SKIVY','SKLIM','SKOAL','SKODY','SKOFF','SKOGS','SKOLS','SKOOL','SKORT','SKOSH','SKRAN','SKRIK','SKRIM','SKUAS','SKUGS','SKULK','SKULL','SKUNK','SKYED','SKYER','SKYEY','SKYFS','SKYRE','SKYRS','SKYTE','SLABS','SLACK','SLADE','SLAES','SLAGS','SLAID','SLAIN','SLAKE','SLAMS','SLANE','SLANG','SLANK','SLANT','SLAPS','SLART','SLASH','SLATE','SLATS','SLATY','SLAVE','SLAWS','SLAYS','SLEBS','SLEDS','SLEEK','SLEEP','SLEER','SLEET','SLEPT','SLEWS','SLEYS','SLICE','SLICK','SLIDE','SLIER','SLILY','SLIME','SLIMS','SLIMY','SLING','SLINK','SLIPE','SLIPS','SLIPT','SLISH','SLITS','SLIVE','SLOAN','SLOBS','SLOES','SLOGS','SLOID','SLOJD','SLOMO','SLOOM','SLOOP','SLOOT','SLOPE','SLOPS','SLOPY','SLORM','SLOSH','SLOTH','SLOTS','SLOVE','SLOWS','SLOYD','SLUBB','SLUBS','SLUED','SLUES','SLUFF','SLUGS','SLUIT','SLUMP','SLUMS','SLUNG','SLUNK','SLURB','SLURP','SLURS','SLUSE','SLUSH','SLUTS','SLYER','SLYLY','SLYPE','SMAAK','SMACK','SMAIK','SMALL','SMALM','SMALT','SMARM','SMART','SMASH','SMAZE','SMEAR','SMEEK','SMEES','SMEIK','SMEKE','SMELL','SMELT','SMERK','SMEWS','SMILE','SMIRK','SMIRR','SMIRS','SMITE','SMITH','SMITS','SMOCK','SMOGS','SMOKE','SMOKO','SMOKY','SMOLT','SMOOR','SMOOT','SMORE','SMORG','SMOTE','SMOUT','SMOWT','SMUGS','SMURS','SMUSH','SMUTS','SNABS','SNACK','SNAFU','SNAGS','SNAIL','SNAKE','SNAKY','SNAPS','SNARE','SNARF','SNARK','SNARL','SNARS','SNARY','SNASH','SNATH','SNAWS','SNEAD','SNEAK','SNEAP','SNEBS','SNECK','SNEDS','SNEED','SNEER','SNEES','SNELL','SNIBS','SNICK','SNIDE','SNIES','SNIFF','SNIFT','SNIGS','SNIPE','SNIPS','SNIPY','SNIRT','SNITS','SNOBS','SNODS','SNOEK','SNOEP','SNOGS','SNOKE','SNOOD','SNOOK','SNOOL','SNOOP','SNOOT','SNORE','SNORK','SNORT','SNOTS','SNOUT','SNOWK','SNOWS','SNOWY','SNUBS','SNUCK','SNUFF','SNUGS','SNUSH','SNYES','SOAKS','SOAPS','SOAPY','SOARE','SOARS','SOAVE','SOBAS','SOBER','SOCAS','SOCES','SOCKO','SOCKS','SOCLE','SODAS','SODDY','SODIC','SODOM','SOFAR','SOFAS','SOFTA','SOFTS','SOFTY','SOGGY','SOILS','SOILY','SOJAS','SOJUS','SOKAH','SOKEN','SOKES','SOKOL','SOLAH','SOLAN','SOLAR','SOLAS','SOLDE','SOLDI','SOLDO','SOLDS','SOLED','SOLEI','SOLER','SOLES','SOLID','SOLON','SOLOS','SOLUM','SOLUS','SOLVE','SOMAN','SOMAS','SONAR','SONCE','SONDE','SONES','SONGS','SONIC','SONLY','SONNE','SONNY','SONSE','SONSY','SOOEY','SOOKS','SOOKY','SOOLE','SOOLS','SOOMS','SOOPS','SOOTE','SOOTH','SOOTS','SOOTY','SOPHS','SOPHY','SOPOR','SOPPY','SOPRA','SORAL','SORAS','SORBO','SORBS','SORDA','SORDO','SORDS','SORED','SOREE','SOREL','SORER','SORES','SOREX','SORGO','SORNS','SORRA','SORRY','SORTA','SORTS','SORUS','SOTHS','SOTOL','SOUCE','SOUCT','SOUGH','SOUKS','SOULS','SOULY','SOUMS','SOUND','SOUPS','SOUPY','SOURS','SOUSE','SOUTH','SOUTS','SOWAR','SOWCE','SOWED','SOWER','SOWFF','SOWFS','SOWLE','SOWLS','SOWMS','SOWND','SOWNE','SOWPS','SOWSE','SOWTH','SOYAS','SOYLE','SOYUZ','SOZIN','SPACE','SPACY','SPADE','SPADO','SPAED','SPAER','SPAES','SPAGS','SPAHI','SPAIL','SPAIN','SPAIT','SPAKE','SPALD','SPALE','SPALL','SPALT','SPAMS','SPANE','SPANG','SPANK','SPANS','SPARD','SPARE','SPARK','SPARS','SPART','SPASM','SPATE','SPATS','SPAUL','SPAWL','SPAWN','SPAWS','SPAYD','SPAYS','SPAZA','SPAZZ','SPEAK','SPEAL','SPEAN','SPEAR','SPEAT','SPECK','SPECS','SPECT','SPEDE','SPEDS','SPEED','SPEEL','SPEER','SPEIL','SPEIR','SPELL','SPELT','SPEND','SPENT','SPEOS','SPERM','SPETS','SPEUG','SPEWS','SPEWY','SPIAL','SPICA','SPICE','SPICK','SPICS','SPICY','SPIDE','SPIED','SPIEL','SPIER','SPIES','SPIFF','SPIFS','SPIKE','SPIKS','SPIKY','SPILE','SPILL','SPILT','SPIMS','SPINA','SPINE','SPINK','SPINS','SPINY','SPIRE','SPIRT','SPIRY','SPITE','SPITS','SPITZ','SPIVS','SPLAT','SPLAY','SPLIT','SPLOG','SPODE','SPODS','SPOIL','SPOKE','SPOOF','SPOOK','SPOOL','SPOOM','SPOON','SPOOR','SPOOT','SPORE','SPORK','SPORT','SPOSH','SPOTS','SPOUT','SPRAD','SPRAG','SPRAT','SPRAY','SPRED','SPREE','SPREW','SPRIG','SPRIT','SPROD','SPROG','SPRUE','SPRUG','SPUDS','SPUED','SPUER','SPUES','SPUGS','SPULE','SPUME','SPUMY','SPUNK','SPURN','SPURS','SPURT','SPUTA','SPYAL','SPYRE','SQUAB','SQUAD','SQUAT','SQUAW','SQUEG','SQUIB','SQUID','SQUIT','SQUIZ','STABS','STACK','STADE','STAFF','STAGE','STAGS','STAGY','STAID','STAIG','STAIN','STAIR','STAKE','STALE','STALK','STALL','STAMP','STAND','STANE','STANG','STANK','STAPH','STAPS','STARE','STARK','STARN','STARR','STARS','START','STASH','STATE','STATS','STAUN','STAVE','STAWS','STAYS','STEAD','STEAK','STEAL','STEAM','STEAN','STEAR','STEDD','STEDE','STEDS','STEED','STEEK','STEEL','STEEM','STEEN','STEEP','STEER','STEIL','STEIN','STELA','STELE','STELL','STEME','STEMS','STEND','STENO','STENS','STENT','STEPS','STEPT','STERE','STERN','STETS','STEWS','STEWY','STEYS','STICH','STICK','STIED','STIES','STIFF','STILB','STILE','STILL','STILT','STIME','STIMS','STIMY','STING','STINK','STINT','STIPA','STIPE','STIRE','STIRK','STIRP','STIRS','STIVE','STIVY','STOAE','STOAI','STOAS','STOAT','STOBS','STOCK','STOEP','STOGY','STOIC','STOIT','STOKE','STOLE','STOLN','STOMA','STOMP','STOND','STONE','STONG','STONK','STONN','STONY','STOOD','STOOK','STOOL','STOOP','STOOR','STOPE','STOPS','STOPT','STORE','STORK','STORM','STORY','STOSS','STOTS','STOTT','STOUN','STOUP','STOUR','STOUT','STOVE','STOWN','STOWP','STOWS','STRAD','STRAE','STRAG','STRAP','STRAW','STRAY','STREP','STREW','STRIA','STRIG','STRIM','STRIP','STROP','STROW','STROY','STRUM','STRUT','STUBS','STUCK','STUDE','STUDS','STUDY','STUFF','STULL','STULM','STUMM','STUMP','STUMS','STUNG','STUNK','STUNS','STUNT','STUPA','STUPE','STURE','STURT','STYED','STYES','STYLE','STYLI','STYLO','STYME','STYMY','STYRE','STYTE','SUAVE','SUBAH','SUBAS','SUBBY','SUBER','SUBHA','SUCCI','SUCKS','SUCKY','SUCRE','SUDDS','SUDOR','SUDSY','SUEDE','SUENT','SUERS','SUETE','SUETS','SUETY','SUGAN','SUGAR','SUGHS','SUHUR','SUIDS','SUING','SUINT','SUITE','SUITS','SUJEE','SUKHS','SUKUK','SULCI','SULFA','SULFO','SULKS','SULKY','SULLY','SULPH','SULUS','SUMAC','SUMIS','SUMMA','SUMOS','SUMPH','SUMPS','SUNKS','SUNNA','SUNNS','SUNNY','SUNUP','SUPER','SUPES','SUPRA','SURAH','SURAL','SURAS','SURAT','SURDS','SURED','SURER','SURES','SURFS','SURFY','SURGE','SURGY','SURLY','SURRA','SUSED','SUSES','SUSHI','SUSIN','SUSUS','SUTOR','SUTRA','SUTTA','SWABS','SWACK','SWADS','SWAGE','SWAGS','SWAIL','SWAIN','SWALE','SWALY','SWAMI','SWAMP','SWAMY','SWANG','SWANK','SWANS','SWAPS','SWAPT','SWARD','SWARE','SWARF','SWARM','SWART','SWASH','SWATH','SWATS','SWAYL','SWAYS','SWEAL','SWEAR','SWEAT','SWEDE','SWEED','SWEEL','SWEEP','SWEER','SWEES','SWEET','SWEIR','SWELL','SWELT','SWEPT','SWERF','SWEYS','SWIES','SWIFT','SWIGS','SWILL','SWIMS','SWINE','SWING','SWINK','SWIPE','SWIRE','SWIRL','SWISH','SWISS','SWITH','SWITS','SWIVE','SWIZZ','SWOBS','SWOLE','SWOLN','SWOON','SWOOP','SWOPS','SWOPT','SWORD','SWORE','SWORN','SWOTS','SWOUN','SWUNG','SYBBE','SYBIL','SYBOE','SYBOW','SYCEE','SYCES','SYCON','SYENS','SYKER','SYKES','SYLIS','SYLPH','SYLVA','SYMAR','SYNCH','SYNCS','SYNDS','SYNED','SYNES','SYNOD','SYNTH','SYPED','SYPES','SYPHS','SYRAH','SYREN','SYRUP','SYSOP','SYTHE','SYVER'];
+        
+        const wordsT = ['TABBY','TABLE','TABOO','TABUS','TACIT','TACKS','TACKY','TACOS','TACTS','TAFFY','TAIGA','TAILS','TAINT','TAKEN','TAKER','TAKES','TALES','TALKS','TALKY','TALLY','TALON','TAMAL','TAMED','TAMER','TAMES','TAMMY','TAMPA','TAMPS','TANGS','TANGY','TANGO','TANGY','TANSY','TAPER','TAPES','TAPIR','TARDY','TARED','TARES','TARNS','TAROT','TARPS','TARRY','TARTS','TARTY','TASKS','TASTE','TASTY','TATTY','TAUNT','TAUPE','TAWNY','TAXED','TAXER','TAXES','TAXIS','TEACH','TEAKS','TEAMS','TEARS','TEARY','TEASE','TEATS','TEDDY','TEENS','TEENY','TEETH','TEMPO','TEMPS','TEMPT','TENCH','TENDS','TENON','TENOR','TENSE','TENTH','TENTS','TEPEE','TEPID','TERMS','TERNS','TERRA','TERRY','TERSE','TESTS','TESTY','TEXAS','TEXTS','THANK','THANE','THAWS','THEFT','THEIR','THEME','THERE','THESE','THETA','THICK','THIEF','THIGH','THING','THINK','THIRD','THORN','THOSE','THREE','THREW','THROB','THROW','THUMB','THUMP','THUNK','THYME','TIARA','TIBIA','TICKS','TIDAL','TIDED','TIDES','TIERS','TIGER','TIGHT','TILDE','TILED','TILER','TILES','TILLS','TILTS','TIMED','TIMER','TIMES','TIMID','TINED','TINES','TINGE','TINTS','TIPSY','TIRED','TIRES','TITAN','TITHE','TITLE','TOAST','TODAY','TODDY','TOGAS','TOILS','TOKEN','TONED','TONER','TONES','TONGS','TONIC','TONKA','TOOLS','TOOTH','TOPAZ','TOPIC','TOPOS','TORCH','TORSO','TORTE','TORUS','TOTAL','TOTEM','TOUCH','TOUGH','TOURS','TOUTS','TOWED','TOWEL','TOWER','TOWNS','TOXIC','TOXIN','TRACE','TRACK','TRACT','TRADE','TRAIL','TRAIN','TRAIT','TRAMP','TRAMS','TRANS','TRAPS','TRASH','TRAWL','TRAYS','TREAD','TREAT','TREES','TREKS','TREND','TRESS','TRIAD','TRIAL','TRIBE','TRICK','TRIED','TRIER','TRIES','TRILL','TRIMS','TRINE','TRIOS','TRIPS','TRITE','TROLL','TROMP','TROOP','TROPE','TROTH','TROTS','TROUT','TROVE','TRUCE','TRUCK','TRULY','TRUMP','TRUNK','TRUSS','TRUST','TRUTH','TRYST','TSARS','TUBAS','TUBBY','TUBED','TUBER','TUBES','TUCKS','TUFTS','TULIP','TULLE','TUMOR','TUNED','TUNER','TUNES','TUNIC','TURBO','TURFS','TURNS','TURPS','TUSKS','TUTOR','TUTUS','TUXES','TWAIN','TWANG','TWEAK','TWEED','TWEET','TWERP','TWICE','TWIGS','TWILL','TWINE','TWINS','TWIRL','TWIST','TWITS','TYING','TYKES','TYPED','TYPES','TYPOS'];
+        const wordsU = ['UDDER','UDONS','UHLAN','UKASE','ULCER','ULTRA','ULVAS','UMAMI','UMBER','UMBRA','UMPED','UNARM','UNARY','UNBAG','UNBAR','UNBID','UNBOX','UNCLE','UNCAP','UNCOY','UNCUT','UNDER','UNDID','UNDUE','UNFED','UNFIT','UNIFY','UNION','UNITE','UNITS','UNITY','UNLAY','UNLED','UNLET','UNLIT','UNMAN','UNMET','UNPAY','UNPEG','UNPIN','UNSAY','UNSET','UNSEW','UNSEX','UNTIE','UNTIL','UNWED','UNWET','UNWON','UPBOW','UPDOS','UPEND','UPPED','UPPER','UPSET','URBAN','URGED','URGER','URGES','URINE','USAGE','USERS','USHER','USING','USUAL','USURP','USURY','UTTER','UVULA'];
+        const wordsV = ['VACUA','VAGUE','VAGUS','VAILS','VALES','VALET','VALID','VALOR','VALUE','VALVE','VAMPS','VANDA','VANED','VANES','VANGS','VAPID','VAPOR','VARIA','VARIX','VARVE','VASES','VASTS','VATIC','VAULT','VAUNT','VAXES','VEALS','VEERS','VEGAN','VEGAS','VEGES','VEILS','VEINS','VEINY','VELAR','VELDS','VELDT','VELUM','VENAL','VENDS','VENOM','VENTS','VENUE','VENUS','VERBS','VERGE','VERSE','VERSO','VERTU','VERVE','VESTS','VETCH','VEXED','VEXES','VIALS','VIAND','VIBES','VICAR','VICED','VICES','VIDEO','VIEWS','VIGIL','VIGOR','VILER','VILLA','VILLI','VILLS','VINAL','VINCA','VINED','VINES','VINYL','VIOLA','VIOLS','VIPER','VIRAL','VIREO','VIRUS','VISAS','VISED','VISIT','VISOR','VISTA','VITAL','VIVAS','VIVID','VIXEN','VIZOR','VOCAL','VODKA','VOGUE','VOICE','VOIDS','VOILA','VOILE','VOLAR','VOLED','VOLES','VOLTA','VOLTS','VOLVA','VOMIT','VOTED','VOTER','VOTES','VOUCH','VOWED','VOWEL','VOWER','VROOM','VULVA','VYING'];
+        const wordsW = ['WACKE','WACKO','WACKS','WACKY','WADDY','WADED','WADER','WADES','WAFER','WAFTS','WAGED','WAGER','WAGES','WAGON','WAHOO','WAIFS','WAILS','WAINS','WAIST','WAITS','WAIVE','WAKED','WAKEN','WAKER','WAKES','WALDO','WALED','WALER','WALES','WALKS','WALLS','WALLY','WALTZ','WANDS','WANED','WANES','WANLY','WANTS','WARDS','WARED','WARES','WAREZ','WARMS','WARNS','WARPS','WARTS','WARTY','WASHY','WASPS','WASPY','WASTE','WATCH','WATER','WATTS','WAVED','WAVER','WAVES','WAVEY','WAXED','WAXEN','WAXER','WAXES','WAYED','WEALD','WEALS','WEANS','WEARS','WEARY','WEAVE','WEBBY','WEBER','WEDGE','WEDGY','WEEDS','WEEDY','WEEKS','WEENY','WEEPS','WEEPY','WEIGH','WEIRD','WEIRS','WEKAS','WELCH','WELDS','WELLS','WELLY','WELSH','WELTS','WENCH','WENDS','WENTS','WERSH','WESTS','WETAS','WETLY','WHACK','WHALE','WHAMO','WHAMS','WHANG','WHAPS','WHARF','WHATS','WHEAT','WHEEL','WHELM','WHELP','WHENS','WHERE','WHETS','WHEWS','WHEYS','WHICH','WHIFF','WHILE','WHIMS','WHINE','WHINY','WHIPS','WHIRL','WHIRR','WHIRS','WHISK','WHIST','WHITE','WHITS','WHIZZ','WHOLE','WHOMP','WHOOP','WHOPS','WHORE','WHORL','WHOSE','WHUMP','WHYDA','WICCA','WICKS','WICKY','WIDEN','WIDER','WIDES','WIDOW','WIDTH','WIELD','WIFED','WIFES','WIFEY','WIFTY','WIGAN','WIGHT','WILCO','WILDS','WILED','WILES','WILLS','WILLY','WILTS','WIMPS','WIMPY','WINCE','WINCH','WINDS','WINDY','WINED','WINES','WINEY','WINGS','WINKS','WINOS','WIPED','WIPER','WIPES','WIRED','WIRER','WIRES','WISED','WISER','WISES','WISPS','WISPY','WISTS','WITCH','WITED','WITES','WITHE','WITHS','WITHY','WITTY','WIVED','WIVES','WIZEN','WOADS','WODGE','WOFUL','WOKEN','WOLDS','WOLFS','WOMAN','WOMBS','WOMEN','WONKS','WONKY','WONTS','WOODS','WOODY','WOOED','WOOER','WOOFS','WOOLS','WOOLY','WOOPS','WOOZY','WORDS','WORDY','WORKS','WORLD','WORMS','WORMY','WORRY','WORSE','WORST','WORTH','WORTS','WOULD','WOUND','WOVEN','WOWED','WRACK','WRANG','WRAPS','WRAPT','WRATH','WREAK','WRECK','WRENS','WREST','WRIED','WRIER','WRIES','WRING','WRIST','WRITE','WRITS','WRONG','WROTE','WROTH','WRUNG','WRYER','WRYLY','WURST','WUXIA','WYLED','WYLES','WYNDS','WYNNS'];
+        const wordsXYZ = ['XEBEC','XENIA','XENIC','XENON','XERIC','XEROX','XERUS','XYLEM','XYLYL','XYSTS','YACHT','YAHOO','YAKAS','YANKS','YAPOK','YARDS','YARNS','YAWLS','YAWNS','YAWNY','YAWPS','YEAHS','YEARN','YEARS','YEAST','YELLS','YELPS','YENTA','YERBA','YESES','YETIS','YETTS','YIELD','YIKES','YODEL','YODHS','YOGAS','YOGIC','YOGIS','YOKED','YOKEL','YOKES','YOLKS','YOLKY','YOMPS','YONIC','YONIS','YONKS','YORES','YOUNG','YOURN','YOURS','YOURT','YOUSE','YOUTH','YOWED','YOWLS','YOWZA','YUANS','YUCCA','YUCKS','YUCKY','YUKKY','YULES','YUMMY','YURTS','ZABRA','ZACKS','ZAIDY','ZAIRE','ZAKAT','ZAMIA','ZANJA','ZANZA','ZAPPY','ZARFS','ZATIS','ZAYIN','ZAZEN','ZEALS','ZEBRA','ZEBUS','ZESTS','ZESTY','ZETAS','ZILCH','ZINCS','ZINES','ZINGS','ZINGY','ZIPPO','ZIPPY','ZITIS','ZLOTY','ZONAE','ZONAL','ZONED','ZONER','ZONES','ZONKS','ZOOID','ZOOMS','ZOONS','ZOOTY','ZORIL','ZORIS','ZORRO','ZOUKS','ZOWIE','ZULUS','ZUPPA','ZYGON','ZYMES','ZYMIC'];
+        
+        const validWords = new Set([
+            ...wordsA, ...wordsB, ...wordsC, ...wordsD, ...wordsE, ...wordsF, 
+            ...wordsG, ...wordsH, ...wordsI, ...wordsJ, ...wordsK, ...wordsL, 
+            ...wordsM, ...wordsN, ...wordsO, ...wordsP, ...wordsQ, ...wordsR, 
+            ...wordsS, ...wordsT, ...wordsU, ...wordsV, ...wordsW, ...wordsXYZ
+        ]);
+
+        // Shake animation for failed words
+        function triggerShake() {
+            const container = document.getElementById('gameContainer');
+            container.classList.add('shake');
+            setTimeout(() => {
+                container.classList.remove('shake');
+            }, 500);
+        }
+
+        // Submit word
+        function submitWord() {
+            const word = gameState.currentLetters.join('');
+            const cost = calculateCost();
+            
+            // Check if word was already found
+            if (gameState.wordsFound.includes(word)) {
+                showMessage('You already found this word!', 'error');
+                gameState.pointsRemaining -= 1;
+                triggerShake();
+                renderGame();
+                return;
+            }
+            
+            // Check if word already failed
+            if (gameState.failedWords.includes(word)) {
+                showMessage('You already tried this word and it failed!', 'error');
+                triggerShake();
+                return; // Don't subtract points for duplicate failed attempts
+            }
+            
+            // Check if it's a valid word
+            if (!validWords.has(word)) {
+                showMessage('Not a valid word! -1 point', 'error');
+                gameState.pointsRemaining -= 1;
+                gameState.failedWords.push(word);
+                triggerShake();
+                renderGame();
+                return;
+            }
+            
+            // Valid word! Calculate points earned
+            const pointsEarned = calculatePointsEarned(word);
+            gameState.pointsRemaining -= cost;
+            gameState.pointsRemaining += pointsEarned;
+            gameState.totalScore += pointsEarned;
+            gameState.wordsFound.push(word);
+            
+            showMessage(`✓ ${word} is valid! +${pointsEarned} points`, 'success');
+            
+            // Apply vowel transformations
+            gameState.currentLetters = gameState.currentLetters.map(letter => {
+                if (gameState.vowelMap[letter]) {
+                    return gameState.vowelMap[letter];
+                }
+                return letter;
+            });
+            
+            gameState.originalLetters = [...gameState.currentLetters];
+            
+            renderGame();
+            
+            // Check if game over
+            if (gameState.pointsRemaining <= 0) {
+                gameState.gameEnded = true;
+                saveScore(gameState.currentDate, gameState.totalScore);
+                
+                // Update button
+                document.getElementById('endGameBtn').textContent = '7-Day Average';
+                document.getElementById('endGameBtn').onclick = showPopup;
+                
+                setTimeout(() => {
+                    showMessage(`Game Over! Final Score: ${gameState.totalScore}`, 'success');
+                    document.getElementById('submitBtn').disabled = true;
+                }, 1500);
+            }
+        }
+
+        // Show message
+        function showMessage(text, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = text;
+            messageDiv.className = `message ${type}`;
+            
+            setTimeout(() => {
+                messageDiv.classList.add('hidden');
+            }, 3000);
+        }
+
+        // End game function
+        function endGame() {
+            if (gameState.gameEnded) {
+                // Already ended, button acts as 7-day average
+                showPopup();
+                return;
+            }
+            
+            // Add remaining points to total score
+            gameState.totalScore += gameState.pointsRemaining;
+            
+            // End the game and save score
+            gameState.gameEnded = true;
+            saveScore(gameState.currentDate, gameState.totalScore);
+            
+            // Update button
+            document.getElementById('endGameBtn').textContent = '7-Day Average';
+            document.getElementById('endGameBtn').onclick = showPopup;
+            
+            // Disable submit button
+            document.getElementById('submitBtn').disabled = true;
+            
+            // Update display to show final score
+            document.getElementById('totalScore').textContent = gameState.totalScore;
+            
+            showMessage(`Game ended! Final Score: ${gameState.totalScore} (+${gameState.pointsRemaining} bonus points)`, 'success');
+        }
+
+        // Show 7-day average popup
+        function showPopup() {
+            const overlay = document.getElementById('popupOverlay');
+            const historyDiv = document.getElementById('scoreHistory');
+            historyDiv.innerHTML = '';
+            
+            // Use current game date if available, otherwise use today
+            const currentDate = gameState.currentDateObj || new Date();
+            const last7Days = getLast7Days(currentDate);
+            const today = getDateKey(currentDate);
+            
+            // Calculate average from known scores
+            let totalScore = 0;
+            let daysPlayed = 0;
+            last7Days.forEach(date => {
+                const score = getScore(getDateKey(date));
+                if (score !== null) {
+                    totalScore += score;
+                    daysPlayed++;
+                }
+            });
+            
+            // Add average display at top
+            if (daysPlayed > 0) {
+                const average = (totalScore / daysPlayed).toFixed(1);
+                const avgDiv = document.createElement('div');
+                avgDiv.style.cssText = 'background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px; border-radius: 10px; text-align: center; margin-bottom: 15px; font-weight: 600;';
+                avgDiv.innerHTML = `<div style="font-size: 0.9em; opacity: 0.9;">7-Day Average</div><div style="font-size: 1.8em; margin-top: 5px;">${average}</div><div style="font-size: 0.85em; opacity: 0.9; margin-top: 3px;">(${daysPlayed} day${daysPlayed !== 1 ? 's' : ''} played)</div>`;
+                historyDiv.appendChild(avgDiv);
+            }
+            
+            last7Days.forEach(date => {
+                const dateKey = getDateKey(date);
+                const score = getScore(dateKey);
+                const isToday = dateKey === today;
+                
+                const dayDiv = document.createElement('div');
+                dayDiv.className = `score-day${isToday ? ' today' : ''}`;
+                
+                const dateSpan = document.createElement('span');
+                dateSpan.className = 'score-date';
+                const dateStr = date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+                dateSpan.textContent = isToday ? `${dateStr} (Today)` : dateStr;
+                
+                const valueSpan = document.createElement('span');
+                if (score !== null) {
+                    valueSpan.className = 'score-value';
+                    valueSpan.textContent = score;
+                } else {
+                    const playBtn = document.createElement('button');
+                    playBtn.className = 'play-past-btn';
+                    playBtn.textContent = 'Play past day';
+                    playBtn.onclick = () => playPastDay(date);
+                    valueSpan.appendChild(playBtn);
+                }
+                
+                dayDiv.appendChild(dateSpan);
+                dayDiv.appendChild(valueSpan);
+                historyDiv.appendChild(dayDiv);
+            });
+            
+            overlay.style.display = 'flex';
+        }
+
+        // Close popup
+        function closePopup() {
+            document.getElementById('popupOverlay').style.display = 'none';
+        }
+
+        // Play a past day
+        function playPastDay(date) {
+            closePopup();
+            
+            // Reset game state
+            gameState = {
+                currentLetters: [],
+                originalLetters: [],
+                pointsRemaining: 20,
+                totalScore: 0,
+                wordsFound: [],
+                failedWords: [],
+                vowelMap: {},
+                seed: 0,
+                gameEnded: false,
+                currentDate: null
+            };
+            
+            // Reinitialize with the selected date
+            initGame(date);
+            
+            // Update button to say "End Game"
+            document.getElementById('endGameBtn').textContent = 'End Game';
+            document.getElementById('endGameBtn').onclick = endGame;
+            
+            // Enable submit button
+            document.getElementById('submitBtn').disabled = false;
+            
+            showMessage(`Playing ${date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}`, 'success');
+        }
+
+        // Initialize game on load
+        initGame();
+    </script>
+</body>
+</html>
