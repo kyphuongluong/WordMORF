@@ -1,0 +1,22 @@
+# MacOS
+.DS_Store
+
+# Windows
+Thumbs.db
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Backup files
+*~
+*.bak
+
+# Checkpoint files (keep these local)
+*checkpoint*.html
+
+# Notes (keep these local)
+*NOTES.md
+*_NOTES.md
