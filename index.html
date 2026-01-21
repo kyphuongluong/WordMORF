@@ -1001,6 +1001,11 @@
             </div>
         </div>
         <div class="date-display" id="dateDisplay"></div>
+        
+        <!-- Mobile Browser Recommendation -->
+        <div style="text-align: center; padding: 5px 20px; font-size: 0.8em; color: #999; font-style: italic;">
+            Plays best on a mobile browser
+        </div>
 
         <div class="stats">
             <div class="stat-box">
@@ -2362,6 +2367,10 @@
                 // Check if game over
                 if (gameState.pointsRemaining <= 0) {
                     gameState.gameEnded = true;
+                    // Subtract negative moves from total score (multiply by 10)
+                    if (gameState.pointsRemaining < 0) {
+                        gameState.totalScore += (gameState.pointsRemaining * 10); // Adding negative = subtracting
+                    }
                     saveScore(gameState.currentDate, gameState.totalScore);
                     document.getElementById('endGameBtn').textContent = '7-Day Average';
                     document.getElementById('endGameBtn').onclick = showPopup;
@@ -2395,6 +2404,10 @@
                 // Check if game over
                 if (gameState.pointsRemaining <= 0) {
                     gameState.gameEnded = true;
+                    // Subtract negative moves from total score (multiply by 10)
+                    if (gameState.pointsRemaining < 0) {
+                        gameState.totalScore += (gameState.pointsRemaining * 10); // Adding negative = subtracting
+                    }
                     saveScore(gameState.currentDate, gameState.totalScore);
                     document.getElementById('endGameBtn').textContent = '7-Day Average';
                     document.getElementById('endGameBtn').onclick = showPopup;
@@ -2478,6 +2491,10 @@
             // Check if game over (with delay to allow animation to complete)
             if (gameState.pointsRemaining <= 0) {
                 gameState.gameEnded = true;
+                // Subtract negative moves from total score (multiply by 10)
+                if (gameState.pointsRemaining < 0) {
+                    gameState.totalScore += (gameState.pointsRemaining * 10); // Adding negative = subtracting
+                }
                 saveScore(gameState.currentDate, gameState.totalScore);
                 
                 // Update button
